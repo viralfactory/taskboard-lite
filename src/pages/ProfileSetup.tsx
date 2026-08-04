@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { createProfile, signOut } from '../lib/api'
+import { nameFromEmail } from '../lib/names'
 import { useAuth } from '../hooks/useAuth'
 
 // 최초 로그인 시 profiles 행이 없으면 여기로 유도된다.
 export default function ProfileSetup() {
   const { userId, email, refresh } = useAuth()
-  const [name, setName] = useState('')
+  // 메일 주소에서 뽑은 이름을 기본값으로 넣어 준다 (고칠 수 있다)
+  const [name, setName] = useState(() => nameFromEmail(email))
   const [part, setPart] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
@@ -32,7 +34,10 @@ export default function ProfileSetup() {
         <p className="text-sm text-on-surface-variant mb-6">{email}</p>
 
         <label className="block text-xs text-on-surface-variant mb-1">이름</label>
-        <input className="field mb-3" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        <input className="field mb-1" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        <p className="text-body-sm text-on-surface-variant mb-3">
+          아이디에서 자동으로 채웠습니다. 다르게 쓰려면 고치세요.
+        </p>
 
         <label className="block text-xs text-on-surface-variant mb-1">파트</label>
         <input
