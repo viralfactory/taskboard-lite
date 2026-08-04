@@ -89,7 +89,6 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
   const [stage, setStage] = useState<string>(seed?.stage ?? 'dev')
   const [isAgenda, setIsAgenda] = useState(seed?.isAgenda ?? true)
   const [moreOpen, setMoreOpen] = useState(false)
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [newActivity, setNewActivity] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [err, setErr] = useState('')
@@ -106,7 +105,6 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
     setCat(p)
     setCheckpoints(cps)
     setDeliverable(cps.length ? cps[cps.length - 1] : '')
-    setPickerOpen(false)
   }
 
   function pickDue(mode: DueMode, value: string) {
@@ -129,7 +127,6 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
           setCat({ l1: CUSTOM_L1, l2: a.name })
           setCheckpoints(cps)
           setDeliverable(cps[cps.length - 1] ?? '')
-          setPickerOpen(false)
         },
         onError: (e) => setErr(optionErrorText(e)),
       },
@@ -261,13 +258,6 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                   </button>
                 )
               })}
-              <button
-                type="button"
-                onClick={() => setPickerOpen((v) => !v)}
-                className={`chip ${pickerOpen ? 'border-primary' : 'border-outline'} hover:bg-surface-low`}
-              >
-                전체 {pickerOpen ? '▴' : '▾'}
-              </button>
             </div>
 
             {!recents.some((p) => p.l1 === cat.l1 && p.l2 === cat.l2) && (
@@ -276,9 +266,8 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
               </div>
             )}
 
-            {/* 최근 3개에 없는 조합은 여기서 고른다 */}
-            {pickerOpen && (
-              <div className="mt-2 border border-outline-variant rounded-md p-3 max-h-72 overflow-y-auto">
+            {/* 전체 목록은 항상 펼쳐 둔다 — 접었다 펴는 동작 자체가 시간을 먹는다 */}
+            <div className="mt-2 border border-outline-variant rounded-md p-3 max-h-80 overflow-y-auto">
                 {L1_LIST.map((l1) => (
                   <div key={l1} className="mb-3 last:mb-0">
                     <div className="text-[11px] text-on-surface-variant mb-1">{l1}</div>
@@ -362,8 +351,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                     )}
                   </div>
                 ))}
-              </div>
-            )}
+            </div>
           </div>
 
           {/* 3. 마감일 */}
