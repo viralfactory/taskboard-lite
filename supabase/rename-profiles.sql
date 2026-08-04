@@ -1,8 +1,9 @@
 -- ════════════════════════════════════════════════════════════
 --  표시 이름을 메일 주소 기준으로 정리
+--  성은 빼고 이름만 씁니다.
 --    jin@team.local        → Jin
---    jayce.kim@team.local  → Jayce Kim
---    sloan_lee@team.local  → Sloan Lee
+--    jayce.kim@team.local  → Jayce
+--    sloan_lee@team.local  → Sloan
 --  팀장은 Steven 으로 고정.
 --
 --  SQL Editor 에 전체를 붙여넣고 Run 하세요. 여러 번 실행해도 안전합니다.
@@ -19,7 +20,7 @@
 -- ─────────────────────────────── 1. 이미 가입한 계정의 이름을 메일에서 다시 뽑는다
 
 update profiles p
-   set name = initcap(replace(replace(split_part(u.email, '@', 1), '.', ' '), '_', ' '))
+   set name = initcap(split_part(replace(replace(split_part(u.email, '@', 1), '.', ' '), '_', ' '), ' ', 1))
   from auth.users u
  where u.id = p.id;
 
@@ -29,7 +30,7 @@ update profiles p
 
 insert into profiles (id, name, part)
 select u.id,
-       initcap(replace(replace(split_part(u.email, '@', 1), '.', ' '), '_', ' ')),
+       initcap(split_part(replace(replace(split_part(u.email, '@', 1), '.', ' '), '_', ' '), ' ', 1)),
        null
   from auth.users u
  where not exists (select 1 from profiles p where p.id = u.id);
@@ -49,6 +50,13 @@ update profiles set name = 'Steven' where is_admin;
 --    order by p.is_admin desc, p.name;
 --
 -- 기대: Steven(팀장) + Jin / Jayce / Sloan …
+
+-- ─────────────────────────────── 주의
+--
+-- 메일이 '성.이름' 순서라면(kim.jayce@…) 첫 단어가 성이므로 Kim 이 됩니다.
+-- 그런 계정이 있으면 아래처럼 개별 지정하세요.
+--   update profiles set name = 'Jayce'
+--    where id = (select id from auth.users where email = 'kim.jayce@team.local');
 
 -- ─────────────────────────────── 참고
 --

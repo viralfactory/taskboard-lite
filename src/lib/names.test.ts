@@ -7,10 +7,10 @@ describe('nameFromEmail', () => {
     expect(nameFromEmail('jayce@team.local')).toBe('Jayce')
     expect(nameFromEmail('sloan@team.local')).toBe('Sloan')
   })
-  it('구분자는 공백으로 바꾸고 각 단어를 대문자로 시작한다', () => {
-    expect(nameFromEmail('jayce.kim@team.local')).toBe('Jayce Kim')
-    expect(nameFromEmail('sloan_lee@team.local')).toBe('Sloan Lee')
-    expect(nameFromEmail('min-ho@team.local')).toBe('Min Ho')
+  it('성은 버리고 첫 단어만 쓴다', () => {
+    expect(nameFromEmail('jayce.kim@team.local')).toBe('Jayce')
+    expect(nameFromEmail('sloan_lee@team.local')).toBe('Sloan')
+    expect(nameFromEmail('min-ho@team.local')).toBe('Min')
   })
   it('이미 대문자면 그대로 둔다', () => {
     expect(nameFromEmail('Steven@team.local')).toBe('Steven')
