@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import TaskForm, { type TaskFormSeed } from '../components/TaskForm'
 import TaskRow from '../components/TaskRow'
-import { useProfiles, useTasks, nameMap } from '../hooks/useTasks'
+import { useProfiles, useTasks, nameMap, childrenMap, withHierarchy } from '../hooks/useTasks'
 import { useAuth } from '../hooks/useAuth'
 import { progressOf } from '../lib/progress'
 import { nextCycleDates } from '../lib/dates'
@@ -36,16 +36,19 @@ export default function MyTasks() {
     return () => window.removeEventListener('keydown', onKey)
   }, [formOpen])
 
+  const kids = useMemo(() => childrenMap(tasks), [tasks])
   const mine = useMemo(() => tasks.filter((t) => t.assignee_id === userId), [tasks, userId])
   const shown = useMemo(() => {
     const list = tab === 'all' ? mine : mine.filter((t) => (tab === 'done' ? t.status === 'done' : t.status !== 'done'))
     // 위험한 것부터
     const rank = { red: 0, yellow: 1, green: 2 }
-    return [...list].sort((a, b) => {
-      const ra = rank[progressOf(a).signal] - rank[progressOf(b).signal]
+    const sorted = [...list].sort((a, b) => {
+      const ra = rank[progressOf(a, undefined, kids.get(a.id) ?? []).signal] -
+                 rank[progressOf(b, undefined, kids.get(b.id) ?? []).signal]
       return ra !== 0 ? ra : a.due_date.localeCompare(b.due_date)
     })
-  }, [mine, tab])
+    return withHierarchy(sorted, kids)
+  }, [mine, tab, kids])
 
   function duplicate(t: Task) {
     const { start, due } = nextCycleDates(t.start_date, t.due_date)
@@ -58,8 +61,8 @@ export default function MyTasks() {
       checkpoints: t.checkpoints.map((c) => c.name),
       deliverable: t.deliverable,
       assigneeId: t.assignee_id,
-      stage: t.stage,
       isAgenda: t.is_agenda,
+      parentId: t.parent_id,
     })
     setFormOpen(true)
   }
@@ -115,8 +118,15 @@ export default function MyTasks() {
         </div>
       ) : (
         <div className="space-y-2">
-          {shown.map((t) => (
-            <TaskRow key={t.id} task={t} assigneeName={names[t.assignee_id]} onDuplicate={duplicate} />
+          {shown.map(({ task, isChild }) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              assigneeName={names[task.assignee_id]}
+              onDuplicate={duplicate}
+              subTasks={kids.get(task.id) ?? []}
+              isChild={isChild}
+            />
           ))}
         </div>
       )}

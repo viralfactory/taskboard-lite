@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createTask, listProfiles } from '../lib/api'
+import { createTask, listProfiles, listTasks } from '../lib/api'
 import {
   checkpointsOf,
   CUSTOM_L1,
@@ -9,7 +9,6 @@ import {
   L1_LIST,
   TEMPLATES,
 } from '../lib/categories'
-import { STAGES } from '../lib/constants'
 import { endOfMonth, nextFriday, thisFriday, todayStr } from '../lib/dates'
 import { pushRecentCat, recentCats, type CatPair } from '../lib/recent'
 import { useAuth } from '../hooks/useAuth'
@@ -33,8 +32,8 @@ export interface TaskFormSeed {
   checkpoints?: string[]
   deliverable?: string
   assigneeId?: string
-  stage?: string
   isAgenda?: boolean
+  parentId?: number | null
 }
 
 type DueMode = 'fri' | 'nextfri' | 'eom' | 'custom'
@@ -57,6 +56,9 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
   const rootRef = useRef<HTMLElement>(null)
 
   const { data: profiles = [] } = useQuery({ queryKey: ['profiles'], queryFn: listProfiles })
+  const { data: allTasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: listTasks })
+  // 2단계까지만 — 이미 부모를 가진 업무는 부모가 될 수 없다
+  const parentCandidates = allTasks.filter((t) => t.parent_id == null && t.status !== 'done')
   const { items: activities, add: addAct, remove: delAct } = useCustomOptions('activity')
 
   const recents = useMemo<CatPair[]>(() => {
@@ -86,7 +88,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
   const [startDate, setStartDate] = useState(seed?.startDate ?? todayStr())
   const [deliverable, setDeliverable] = useState(seed?.deliverable ?? deliverableOf(cat.l1, cat.l2))
   const [assigneeId, setAssigneeId] = useState(seed?.assigneeId ?? userId ?? '')
-  const [stage, setStage] = useState<string>(seed?.stage ?? 'dev')
+  const [parentId, setParentId] = useState<number | null>(seed?.parentId ?? null)
   const [isAgenda, setIsAgenda] = useState(seed?.isAgenda ?? true)
   const [moreOpen, setMoreOpen] = useState(false)
   const [newActivity, setNewActivity] = useState('')
@@ -152,8 +154,8 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
           due_date: dueDate,
           deliverable: deliverable || cps[cps.length - 1],
           checkpoints: cps,
-          stage,
           is_agenda: isAgenda,
+          parent_id: parentId,
         },
         userId,
       )
@@ -390,35 +392,11 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
               />
             </div>
           </div>
-
-          {/* 4. 단계 */}
-          <div className="mb-4 lg:mb-0">
-            <div className="text-xs text-on-surface-variant mb-1.5">단계</div>
-            <div
-              className="flex flex-wrap gap-1.5"
-              tabIndex={-1}
-              onKeyDown={(e) => chipGroupKeys(e, (i) => setStage(STAGES[i]), STAGES.length)}
-            >
-              {STAGES.map((s, i) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setStage(s)}
-                  className={`chip ${
-                    stage === s ? 'chip-on' : 'border-outline hover:bg-surface-low'
-                  }`}
-                >
-                  <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* ── 오른쪽 단 */}
         <div className="lg:border-l lg:border-outline-variant lg:pl-8">
-          {/* 5. 체크포인트 (템플릿 자동 생성) */}
+          {/* 4. 체크포인트 (템플릿 자동 생성) — 진행 단계도 이걸로 관리한다 */}
           <div className="mb-4">
             <div className="text-xs text-on-surface-variant mb-1.5">
               체크포인트 (자동) <span className="text-on-surface-variant/60">· 2개 이상</span>
@@ -462,11 +440,28 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
             className="text-xs text-on-surface-variant mb-3"
             tabIndex={-1}
           >
-            {moreOpen ? '▾' : '▸'} 담당자·시작일·산출물·월간보고 포함 변경
+            {moreOpen ? '▾' : '▸'} 상위 업무·담당자·시작일·산출물·월간보고 포함
           </button>
 
           {moreOpen && (
             <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="col-span-2">
+                <div className="text-xs text-on-surface-variant mb-1">
+                  상위 업무 <span className="text-on-surface-variant/60">(큰 프로젝트를 쪼갤 때만)</span>
+                </div>
+                <select
+                  className="field"
+                  value={parentId ?? ''}
+                  onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">없음 — 독립 업무</option>
+                  {parentCandidates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <div className="text-xs text-on-surface-variant mb-1">담당자</div>
                 <select className="field" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>

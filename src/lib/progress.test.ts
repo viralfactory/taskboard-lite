@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { calcActualPct, calcPlanPct, getSignal, progressOf } from './progress'
+import {
+  calcActualPct,
+  calcPlanPct,
+  currentStage,
+  getSignal,
+  progressOf,
+  rollupActualPct,
+  rollupDueDate,
+  rollupStartDate,
+} from './progress'
 import { isoWeek, thisFriday, nextFriday, endOfMonth, weekRange, nextCycleDates } from './dates'
 
 describe('calcActualPct', () => {
@@ -99,5 +108,64 @@ describe('dates', () => {
       start: '2026-08-04',
       due: '2026-08-11',
     })
+  })
+})
+
+// ─────────────────────────────── v5: 현재 단계 · 부모 롤업
+
+describe('currentStage', () => {
+  const cp = (name: string, done: boolean) => ({ name, is_done: done })
+  const S = ['요건정의', '분석', '설계', '구현', '테스트', '배포']
+  const make = (...done: boolean[]) => S.map((n, i) => cp(n, done[i] ?? false))
+
+  it('전부 미완료면 첫 단계', () => {
+    expect(currentStage(make())).toBe('요건정의')
+  })
+  it('완료한 것의 다음 단계', () => {
+    expect(currentStage(make(true))).toBe('분석')
+    expect(currentStage(make(true, true, true))).toBe('구현')
+  })
+  it('건너뛰고 체크해도 가장 진행된 지점 기준', () => {
+    // ☑요건정의 ☐분석 ☑설계 → '분석' 이 아니라 '구현'
+    expect(currentStage(make(true, false, true))).toBe('구현')
+  })
+  it('전부 완료면 완료', () => {
+    expect(currentStage(make(true, true, true, true, true, true))).toBe('완료')
+  })
+  it('체크포인트가 없으면 빈 문자열', () => {
+    expect(currentStage([])).toBe('')
+  })
+})
+
+describe('부모 롤업', () => {
+  const child = (pct: [number, number], start: string, due: string) => ({
+    start_date: start,
+    due_date: due,
+    status: 'doing',
+    checkpoints: Array.from({ length: pct[1] }, (_, i) => ({ is_done: i < pct[0] })),
+  })
+  const parent = { start_date: '2026-08-01', due_date: '2026-08-05', status: 'doing', checkpoints: [] }
+
+  it('진척률은 자식 평균', () => {
+    const kids = [child([1, 2], '2026-08-01', '2026-08-10'), child([0, 2], '2026-08-05', '2026-08-20')]
+    expect(rollupActualPct(parent, kids)).toBe(25) // (50 + 0) / 2
+  })
+  it('마감일은 자식 중 가장 늦은 날, 시작일은 가장 이른 날', () => {
+    const kids = [child([1, 2], '2026-08-03', '2026-08-10'), child([0, 2], '2026-08-01', '2026-08-20')]
+    expect(rollupDueDate(parent, kids)).toBe('2026-08-20')
+    expect(rollupStartDate(parent, kids)).toBe('2026-08-01')
+  })
+  it('자식이 없으면 자기 값을 쓴다', () => {
+    const solo = { ...parent, checkpoints: [{ is_done: true }, { is_done: false }] }
+    expect(rollupActualPct(solo, [])).toBe(50)
+    expect(rollupDueDate(solo, [])).toBe('2026-08-05')
+  })
+  it('progressOf 가 자식 기준으로 신호를 낸다', () => {
+    // 자식 진척 0%, 기간 8/1~8/20 중 8/11 → 계획 50% → SV -50 → 빨강
+    const kids = [child([0, 2], '2026-08-01', '2026-08-20')]
+    const r = progressOf(parent, '2026-08-11', kids)
+    expect(r.actualPct).toBe(0)
+    expect(r.dueDate).toBe('2026-08-20')
+    expect(r.signal).toBe('red')
   })
 })

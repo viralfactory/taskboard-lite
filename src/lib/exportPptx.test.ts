@@ -17,7 +17,7 @@ function task(over: Partial<Task> = {}): Task {
     due_change_count: 0, due_change_reason: null, created_at: '2026-07-01T00:00:00Z',
     checkpoints: [], issues: [],
     progress_note: '결제 연동 개발 완료, 운영 반영 대기',
-    stage: 'dev', initial_due_date: '2026-07-13', is_agenda: true,
+    initial_due_date: '2026-07-13', is_agenda: true, parent_id: null,
     ...over,
   }
 }
@@ -51,10 +51,15 @@ async function renderToBuffer(agendaCount: number) {
       name: `안건 ${i + 1}`,
       initial_due_date: i % 2 ? '2026-07-13' : '2026-07-29',
       due_date: i % 2 ? '2026-08-06' : '2026-07-29',
-      checkpoints: [
-        { id: i * 2 + 1, task_id: i + 1, name: 'a', is_done: true, done_at: '2026-07-20T00:00:00Z', sort_order: 0 },
-        { id: i * 2 + 2, task_id: i + 1, name: 'b', is_done: i % 3 === 0, done_at: null, sort_order: 1 },
-      ],
+      // 개발 6단계. 요건정의는 완료, 3의 배수는 분석까지 완료
+      checkpoints: ['요건정의', '분석', '설계', '구현', '테스트', '배포'].map((name, j) => ({
+        id: i * 10 + j + 1,
+        task_id: i + 1,
+        name,
+        is_done: j === 0 || (j === 1 && i % 3 === 0),
+        done_at: j === 0 ? '2026-07-20T00:00:00Z' : null,
+        sort_order: j,
+      })),
     }),
   )
   const incidents = [
@@ -120,9 +125,11 @@ describe('PPTX 생성', () => {
     expect(xml.sheet).toContain('전월 1건 대비 ▲1건')
   })
 
-  it('일정 칸이 6.2 형식으로 들어간다', () => {
-    expect(xml.sheet).toContain('7/13 → 8/6 dev')
-    expect(xml.sheet).toContain('7/29 dev')
+  it('일정 칸이 6.2 형식으로 들어가고, 단계는 체크포인트에서 나온다', () => {
+    // 마감이 밀린 건 → 화살표 표기, 단계는 '분석' (요건정의까지 완료)
+    expect(xml.sheet).toContain('7/13 → 8/6 분석')
+    // 마감 그대로인 건 → 날짜 하나, 단계는 '설계' (분석까지 완료)
+    expect(xml.sheet).toContain('7/29 설계')
   })
 
   it('의사결정 사항과 차월 계획이 들어간다', () => {

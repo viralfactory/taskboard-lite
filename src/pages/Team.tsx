@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import TaskRow from '../components/TaskRow'
 import TaskForm, { type TaskFormSeed } from '../components/TaskForm'
-import { useProfiles, useTasks, nameMap } from '../hooks/useTasks'
+import { useProfiles, useTasks, nameMap, childrenMap, withHierarchy } from '../hooks/useTasks'
 import { progressOf, type Signal } from '../lib/progress'
 import { L1_LIST } from '../lib/categories'
 import { nextCycleDates } from '../lib/dates'
@@ -20,6 +20,7 @@ export default function Team() {
   const [hideDone, setHideDone] = useState(true)
   const [formSeed, setFormSeed] = useState<TaskFormSeed | null>(null)
 
+  const kids = useMemo(() => childrenMap(tasks), [tasks])
   const rows = useMemo(() => {
     const list = tasks.filter((t) => {
       if (hideDone && t.status === 'done') return false
@@ -29,11 +30,13 @@ export default function Team() {
       return true
     })
     // 🔴 상단 고정
-    return list.sort((a, b) => {
-      const r = RANK[progressOf(a).signal] - RANK[progressOf(b).signal]
+    const sorted = list.sort((a, b) => {
+      const r = RANK[progressOf(a, undefined, kids.get(a.id) ?? []).signal] -
+                RANK[progressOf(b, undefined, kids.get(b.id) ?? []).signal]
       return r !== 0 ? r : a.due_date.localeCompare(b.due_date)
     })
-  }, [tasks, who, cat, sig, hideDone])
+    return withHierarchy(sorted, kids)
+  }, [tasks, who, cat, sig, hideDone, kids])
 
   const stat = useMemo(() => {
     const active = tasks.filter((t) => t.status !== 'done')
@@ -52,8 +55,8 @@ export default function Team() {
       checkpoints: t.checkpoints.map((c) => c.name),
       deliverable: t.deliverable,
       assigneeId: t.assignee_id,
-      stage: t.stage,
       isAgenda: t.is_agenda,
+      parentId: t.parent_id,
     })
   }
 
@@ -113,8 +116,15 @@ export default function Team() {
         <p className="text-sm text-on-surface-variant">조건에 맞는 업무가 없습니다.</p>
       ) : (
         <div className="space-y-2">
-          {rows.map((t) => (
-            <TaskRow key={t.id} task={t} assigneeName={names[t.assignee_id]} onDuplicate={duplicate} />
+          {rows.map(({ task, isChild }) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              assigneeName={names[task.assignee_id]}
+              onDuplicate={duplicate}
+              subTasks={kids.get(task.id) ?? []}
+              isChild={isChild}
+            />
           ))}
         </div>
       )}

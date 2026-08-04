@@ -184,6 +184,19 @@ export default function Monthly() {
         )}
       </div>
 
+      {data.byStage.length > 0 && (
+        <div className="card p-3 mb-5">
+          <div className="text-body-sm text-on-surface-variant mb-2">단계별 현황 (체크포인트에서 자동 집계)</div>
+          <div className="flex flex-wrap gap-2">
+            {data.byStage.map((s) => (
+              <span key={s.stage} className="chip-on">
+                {s.stage} <b className="ml-0.5">{s.count}</b>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-[1fr_20rem] gap-5">
         {/* 1. 개발 안건 */}
         <div>
@@ -200,7 +213,12 @@ export default function Monthly() {
               <tbody>
                 {data.agendas.map((a) => (
                   <tr key={a.id} className="border-t border-outline-variant">
-                    <td className="px-2 py-2 font-semibold max-w-[12rem]">{a.name}</td>
+                    <td className="px-2 py-2 max-w-[12rem]">
+                      {a.parentName && (
+                        <div className="text-[10px] text-on-surface-variant">{a.parentName}</div>
+                      )}
+                      <span className="font-semibold">{a.name}</span>
+                    </td>
                     <td className="px-2 py-2 text-on-surface-variant max-w-[16rem]">
                       {a.progressNote || <span className="text-on-surface-variant/60">미작성 — 주간보고에서 입력</span>}
                     </td>

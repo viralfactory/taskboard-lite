@@ -135,7 +135,6 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
   const { userId } = useAuth()
   const { data: tasks = [] } = useTasks()
   const [issueNote, setIssueNote] = useState(report.issue_note ?? '')
-  const [comment, setComment] = useState(report.comment ?? '')
   const [newTodo, setNewTodo] = useState('')
   const [newDone, setNewDone] = useState('')
   const [histOpen, setHistOpen] = useState(false)
@@ -144,7 +143,6 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
 
   useEffect(() => {
     setIssueNote(report.issue_note ?? '')
-    setComment(report.comment ?? '')
   }, [report.id])
 
   const items = report.daily_items ?? []
@@ -284,14 +282,6 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
         />
       </Section>
 
-      <Section title="특이사항" human>
-        <textarea
-          className="field h-20 resize-none"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          onBlur={() => comment !== (report.comment ?? '') && save.mutate({ comment })}
-        />
-      </Section>
 
       <div className="flex items-center gap-3">
         <button
@@ -461,7 +451,6 @@ function TeamDaily({
                 <TeamLine label="To Do" items={todo.map((i) => i.label)} />
                 <TeamLine label="Done" items={done.map((i) => i.label)} />
                 {r.issue_note && <TeamLine label="이슈" items={[r.issue_note]} warn />}
-                {r.comment && <TeamLine label="특이" items={[r.comment]} />}
               </div>
             )}
           </div>

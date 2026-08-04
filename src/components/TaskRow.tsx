@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { addCheckpoint, deleteCheckpoint, deleteTask, toggleCheckpoint, updateTask } from '../lib/api'
-import { progressOf } from '../lib/progress'
-import { STAGES } from '../lib/constants'
+import { currentStage, progressOf } from '../lib/progress'
 import { diffDays, todayStr } from '../lib/dates'
 import SignalBadge, { ProgressBar } from './SignalBadge'
 import DueChangeModal from './DueChangeModal'
@@ -17,10 +16,15 @@ export default function TaskRow({
   task,
   assigneeName,
   onDuplicate,
+  subTasks = [],
+  isChild = false,
 }: {
   task: Task
   assigneeName?: string
   onDuplicate: (t: Task) => void
+  /** 자식 업무들 — 넘기면 진척률·마감일을 여기서 끌어올린다 */
+  subTasks?: Task[]
+  isChild?: boolean
 }) {
   const qc = useQueryClient()
   const { profile, userId } = useAuth()
@@ -29,7 +33,8 @@ export default function TaskRow({
   const [issueOpen, setIssueOpen] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
   const [newCp, setNewCp] = useState('')
-  const p = progressOf(task)
+  const p = progressOf(task, undefined, subTasks)
+  const stage = currentStage(task.checkpoints ?? [])
 
   const onSuccess = () => void qc.invalidateQueries({ queryKey: ['tasks'] })
 
@@ -60,7 +65,7 @@ export default function TaskRow({
 
   return (
     <>
-      <div className="bg-surface-lowest border border-outline-variant rounded-md">
+      <div className={`bg-surface-lowest border border-outline-variant rounded-md ${isChild ? 'ml-6' : ''}`}>
         <div className="flex items-center gap-3 px-3 py-2.5">
           <button onClick={() => setOpen((v) => !v)} className="text-on-surface-variant/60 w-4 shrink-0">
             {open ? '▾' : '▸'}
@@ -77,9 +82,10 @@ export default function TaskRow({
             </div>
             <div className="text-[11px] text-on-surface-variant mt-0.5 truncate">
               {task.cat_l1}&gt;{task.cat_l2}
-              {task.stage && task.stage !== 'dev' && ` · ${task.stage}`}
+              {subTasks.length > 0 && ` · 하위 ${subTasks.length}건`}
+              {subTasks.length === 0 && stage && ` · ${stage}`}
               {task.is_agenda === false && ' · 보고제외'}
-              {assigneeName && ` · ${assigneeName}`} · ~{task.due_date}
+              {assigneeName && ` · ${assigneeName}`} · ~{p.dueDate}
               {task.status !== 'done' && dLeft >= 0 && dLeft <= 3 && (
                 <span className="text-signal-yellow"> · D-{dLeft}</span>
               )}
@@ -204,17 +210,6 @@ export default function TaskRow({
                 {Object.entries(STATUS_LABEL).map(([v, l]) => (
                   <option key={v} value={v}>
                     {l}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="chip border-outline text-xs"
-                value={task.stage || 'dev'}
-                onChange={(e) => patch.mutate({ stage: e.target.value })}
-              >
-                {STAGES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
                   </option>
                 ))}
               </select>

@@ -388,7 +388,7 @@ export async function saveDailyReport(
     const fields = patch as unknown as Record<string, unknown>
     await recordHistory(
       'daily',
-      (['issue_note', 'comment', 'is_leave'] as const)
+      (['issue_note', 'is_leave'] as const)
         .filter((f) => f in fields && String(fields[f] ?? '') !== String(before[f] ?? ''))
         .map((f) => ({
           entity_id: report.id,

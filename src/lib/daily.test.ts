@@ -27,9 +27,9 @@ function task(over: Partial<Task> = {}): Task {
     checkpoints: [],
     issues: [],
     progress_note: null,
-    stage: 'dev',
     initial_due_date: '2026-08-07',
     is_agenda: true,
+    parent_id: null,
     ...over,
   }
 }

@@ -24,9 +24,9 @@ function task(over: Partial<Task> = {}): Task {
     checkpoints: [],
     issues: [],
     progress_note: null,
-    stage: 'dev',
     initial_due_date: '2026-07-13',
     is_agenda: true,
+    parent_id: null,
     ...over,
   }
 }
@@ -104,19 +104,26 @@ describe('agendaStatus (6.1)', () => {
 
 // ─────────────────────────────── 6.2 일정 표기
 
-describe('scheduleText (6.2)', () => {
-  it('변경 없으면 "M/D {stage}"', () => {
-    const t = task({ due_date: '2026-07-29', initial_due_date: '2026-07-29', stage: '운영적용' })
-    expect(scheduleText(t)).toBe('7/29 운영적용')
+function cps(...done: boolean[]) {
+  const names = ['요건정의', '분석', '설계', '구현', '테스트', '배포']
+  return names.map((name, i) => ({
+    id: i + 1, task_id: 1, name, is_done: done[i] ?? false, done_at: null, sort_order: i,
+  }))
+}
+
+describe('scheduleText (6.2) — 단계는 체크포인트에서 자동으로 나온다', () => {
+  it('변경 없으면 "M/D {단계}"', () => {
+    const t = task({ due_date: '2026-07-29', initial_due_date: '2026-07-29', checkpoints: cps(true, true, true) })
+    expect(scheduleText(t)).toBe('7/29 구현')
   })
 
-  it('변경됐으면 "M/D → M/D {stage}"', () => {
-    const t = task({ initial_due_date: '2026-07-13', due_date: '2026-08-06', stage: 'dev' })
-    expect(scheduleText(t)).toBe('7/13 → 8/6 dev')
+  it('변경됐으면 "M/D → M/D {단계}"', () => {
+    const t = task({ initial_due_date: '2026-07-13', due_date: '2026-08-06', checkpoints: cps(true) })
+    expect(scheduleText(t)).toBe('7/13 → 8/6 분석')
   })
 
-  it('initial_due_date 가 없으면(구 데이터) 현재 마감일만', () => {
-    expect(scheduleText(task({ initial_due_date: null, due_date: '2026-07-13' }))).toBe('7/13 dev')
+  it('체크포인트가 없으면 날짜만', () => {
+    expect(scheduleText(task({ initial_due_date: null, due_date: '2026-07-13' }))).toBe('7/13')
   })
 })
 

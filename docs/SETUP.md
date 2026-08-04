@@ -78,10 +78,10 @@ git --version
    (운영·장애 관리 + 월간보고용)
 6. 한 번 더 **New query** 로 [`supabase/schema-v3.sql`](../supabase/schema-v3.sql) 실행
    (카테고리 통합 + 사용자 추가 목록용)
-7. 마지막으로 [`supabase/schema-v4.sql`](../supabase/schema-v4.sql) 실행
-   (데일리 스크럼 + 변경 이력)
+7. [`supabase/schema-v4.sql`](../supabase/schema-v4.sql) 실행 (데일리 스크럼 + 변경 이력)
+8. [`supabase/schema-v5.sql`](../supabase/schema-v5.sql) 실행 (업무 2단 구조 + 카테고리 정리)
 
-> **순서를 지켜야 합니다** — `schema.sql` → `schema-v2.sql` → `schema-v3.sql` → `schema-v4.sql`
+> **순서를 지켜야 합니다** — `schema.sql` → `v2` → `v3` → `v4` → `v5`
 
 **확인** — 같은 편집기에서 아래를 실행하세요.
 

@@ -34,9 +34,12 @@ export interface Task {
   issues?: Issue[]
   // v2
   progress_note: string | null
-  stage: string
+  /** @deprecated v5 부터 쓰지 않는다. 진행 단계는 체크포인트가 담당한다. */
+  stage?: string | null
   initial_due_date: string | null
   is_agenda: boolean
+  // v5 — 2단 구조 (부모 프로젝트 : 자식 = 1:N). 자식은 다시 자식을 갖지 않는다.
+  parent_id: number | null
 }
 
 export interface Issue {
@@ -170,6 +173,6 @@ export interface NewTaskInput {
   due_date: string
   deliverable: string
   checkpoints: string[]
-  stage: string
   is_agenda: boolean
+  parent_id: number | null
 }

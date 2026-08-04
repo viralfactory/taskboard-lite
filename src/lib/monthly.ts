@@ -2,7 +2,7 @@
 // 월간보고의 모든 수치는 이 파일을 거친다 — 화면에서 직접 집계하지 않는다.
 
 import { addMonths, mdOf, monthRange, recentMonths, todayStr } from './dates'
-import { progressOf } from './progress'
+import { currentStage, progressOf } from './progress'
 import { SEVERITY_ORDER, type Severity } from './constants'
 import type { Incident, Issue, MonthlyReport, NextMonthPlan, Task } from './types'
 
@@ -22,15 +22,17 @@ export function agendaStatus(task: Task, today = todayStr()): AgendaStatus {
 
 /**
  * 6.2 일정 표기.
- *   최초 마감 == 현재 마감  →  "M/D {stage}"        예: 7/29 운영 적용
- *   최초 마감 != 현재 마감  →  "M/D → M/D {stage}"  예: 7/13 → 8/6 dev
- * 일정이 밀린 사실이 자동으로 드러난다. 숨길 수 없다.
+ *   최초 마감 == 현재 마감  →  "M/D {단계}"        예: 8/6 구현
+ *   최초 마감 != 현재 마감  →  "M/D → M/D {단계}"  예: 7/13 → 8/6 구현
+ * 단계는 입력받지 않는다 — 체크포인트 진행 상태에서 자동으로 나온다.
+ * 일정이 밀린 사실도 자동으로 드러난다. 숨길 수 없다.
  */
 export function scheduleText(task: Task): string {
-  const stage = task.stage || 'dev'
+  const stage = currentStage(task.checkpoints ?? [])
+  const suffix = stage ? ` ${stage}` : ''
   const initial = task.initial_due_date
-  if (!initial || initial === task.due_date) return `${mdOf(task.due_date)} ${stage}`
-  return `${mdOf(initial)} → ${mdOf(task.due_date)} ${stage}`
+  if (!initial || initial === task.due_date) return `${mdOf(task.due_date)}${suffix}`
+  return `${mdOf(initial)} → ${mdOf(task.due_date)}${suffix}`
 }
 
 /** 기간이 해당 월과 겹치는가 */
@@ -42,8 +44,12 @@ function inMonth(task: Task, ym: string): boolean {
 export interface AgendaRow {
   id: number
   name: string
+  /** 부모 프로젝트 이름 (자식 업무일 때만) */
+  parentName: string
   progressNote: string
   status: AgendaStatus
+  /** 체크포인트에서 자동 판정한 현재 단계 */
+  stage: string
   pct: number
   schedule: string
 }
@@ -73,6 +79,8 @@ export interface MonthlyData {
 
   agendas: AgendaRow[]
   agendaOverflow: number
+  /** 단계별 건수 — 자동 집계의 핵심 */
+  byStage: { stage: string; count: number }[]
 
   incidents: {
     trend: { month: string; label: string; count: number }[]
@@ -108,7 +116,12 @@ export function buildMonthlyReport(
   const nextYm = addMonths(ym, 1)
 
   // ── 1. 개발 안건
-  const agendaTasks = src.tasks.filter((t) => t.is_agenda !== false && inMonth(t, ym))
+  // 부모(자식을 가진 업무)는 묶음일 뿐이므로 안건에서 빼고 자식 각각을 올린다.
+  const parentIds = new Set(src.tasks.map((t) => t.parent_id).filter((v): v is number => v != null))
+  const nameById = new Map(src.tasks.map((t) => [t.id, t.name]))
+  const agendaTasks = src.tasks.filter(
+    (t) => t.is_agenda !== false && inMonth(t, ym) && !parentIds.has(t.id),
+  )
   const withStatus = agendaTasks.map((t) => ({ t, s: agendaStatus(t, today) }))
   const rank: Record<AgendaStatus, number> = { 지연: 0, 진행중: 1, 완료: 2 }
   withStatus.sort((a, b) => rank[a.s] - rank[b.s] || a.t.due_date.localeCompare(b.t.due_date))
@@ -116,8 +129,10 @@ export function buildMonthlyReport(
   const allRows: AgendaRow[] = withStatus.map(({ t, s }) => ({
     id: t.id,
     name: t.name,
+    parentName: t.parent_id ? (nameById.get(t.parent_id) ?? '') : '',
     progressNote: t.progress_note ?? '',
     status: s,
+    stage: currentStage(t.checkpoints ?? []),
     pct: progressOf(t, today).actualPct,
     schedule: scheduleText(t),
   }))
@@ -130,6 +145,20 @@ export function buildMonthlyReport(
   const done = withStatus.filter((x) => x.s === '완료').length
   const delayed = withStatus.filter((x) => x.s === '지연').length
   const doing = withStatus.length - done - delayed
+
+  // 단계별 건수 — 개발 6단계 순서를 유지하고, 그 밖의 단계는 뒤에 붙인다
+  const stageOrder = ['요건정의', '분석', '설계', '구현', '테스트', '배포', '완료']
+  const stageCount = new Map<string, number>()
+  for (const r of allRows) {
+    if (!r.stage) continue
+    stageCount.set(r.stage, (stageCount.get(r.stage) ?? 0) + 1)
+  }
+  const byStage = [
+    ...stageOrder.filter((s) => stageCount.has(s)).map((s) => ({ stage: s, count: stageCount.get(s)! })),
+    ...[...stageCount.keys()]
+      .filter((s) => !stageOrder.includes(s))
+      .map((s) => ({ stage: s, count: stageCount.get(s)! })),
+  ]
 
   // ── 2. 장애
   const monthIncidents = (m: string) => {
@@ -202,6 +231,7 @@ export function buildMonthlyReport(
     },
     agendas,
     agendaOverflow: Math.max(0, allRows.length - agendas.length),
+    byStage,
     incidents: {
       trend,
       bySeverity,
