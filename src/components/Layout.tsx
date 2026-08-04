@@ -6,9 +6,9 @@ import ThemeMenu from './ThemeMenu'
 
 const NAV = [
   { to: '/', label: '내 업무', icon: '☑', end: true },
-  { to: '/team', label: '팀 현황', icon: '👥', end: false },
-  { to: '/incidents', label: '장애 관리', icon: '⚠', end: false },
   { to: '/daily', label: '데일리', icon: '📅', end: false },
+  { to: '/incidents', label: '장애 관리', icon: '⚠', end: false },
+  { to: '/team', label: '팀 현황', icon: '👥', end: false },
   { to: '/weekly', label: '주간보고', icon: '📄', end: false },
   { to: '/monthly', label: '월간보고', icon: '📊', end: false },
   { to: '/report', label: '리포트', icon: '⬇', end: false },
