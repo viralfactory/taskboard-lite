@@ -25,7 +25,7 @@ create table if not exists incidents (
   id serial primary key,
   occurred_at       date not null,
   title             text not null,
-  system            text not null,              -- WEB | POVAS | 공통
+  system            text not null,              -- BRS | Workspace | WEB | POVAS | ERP (+ 팀이 추가한 값)
   severity          text not null,              -- critical | major | normal
   cause_type        text,                       -- 코드결함 | 데이터 | 인프라 | 외부연동 | 운영실수 | 기타
   action            text,                       -- 조치 내용

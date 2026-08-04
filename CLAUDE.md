@@ -27,6 +27,8 @@
 
 - 장애(`incidents`)는 업무(`tasks`)와 별개 엔티티다. 장애를 태스크로 등록하지 않는다.
 - 장애 등급 판정 기준은 `constants.ts` 에 고정. 화면에서 임의 등급을 추가하지 않는다.
+- 시스템 목록도 `constants.ts` 의 `SYSTEMS` 배열 순서가 화면 순서다.
+  (BRS · Workspace · WEB · POVAS · ERP) 팀이 추가한 항목은 뒤에 붙는다.
 - `progress_note` 는 등록 시 입력받지 않는다. 주간보고 작성 시에만 입력한다.
 - `initial_due_date` 는 사용자가 수정할 수 없다. 최초 저장 시 자동 설정
   (`api.ts` 의 `updateTask` 가 이 필드를 버린다).
