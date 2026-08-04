@@ -19,13 +19,13 @@ GitHub Pages 정적 배포 + Supabase(Postgres + Auth). 서버 없음.
 4. Authentication > Users 에서 팀원 8명 생성 (**Auto Confirm User 체크**)
 5. 로컬 실행
    ```bash
-   cp .env.example .env    # Project URL + anon(publishable) key
+   cp .env.example .env    # Project URL + Publishable key
    npm install
    npm run dev
    ```
 6. GitHub 저장소 push → Pages Source 를 **GitHub Actions** 로 → Secrets 2개 등록
 
-`anon key` 만 사용합니다. **`service_role` key 는 절대 넣지 마세요** — 정적 사이트라 브라우저에 그대로 노출되고 RLS가 무력화됩니다.
+Publishable key(구 anon key)만 사용합니다. **Secret key(`sb_secret_…`) 는 절대 넣지 마세요** — 정적 사이트라 브라우저에 그대로 노출되고 RLS가 무력화됩니다.
 
 ## 2. 사용법
 

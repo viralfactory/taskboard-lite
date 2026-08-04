@@ -136,23 +136,49 @@ Supabase 는 메일 형식만 맞으면 받아들이고, 확인 메일도 보내
 
 ## 5. API 키 확인
 
-**Project Settings**(톱니바퀴) → **API** (또는 **API Keys**)
+필요한 값은 2개인데 **서로 다른 화면**에 있습니다.
 
-| 화면의 이름 | 넣을 곳 |
-|---|---|
-| **Project URL** — `https://xxxxxxxx.supabase.co` | `VITE_SUPABASE_URL` |
-| **anon / public** 키 (신버전은 **Publishable key**, `sb_publishable_...`) | `VITE_SUPABASE_ANON_KEY` |
+### 5-1. 키 — Settings → **API Keys**
 
-두 값을 복사해 두세요. 6단계와 8단계에서 씁니다.
+`Publishable and secret API keys` 탭에서 **Publishable key** 의 `default` 행을 복사합니다.
 
-> ### ⚠️ `service_role` / `secret` 키는 절대 쓰지 마세요
+```
+sb_publishable_xxxxxxxxxxxxxxxxxxxxxxxx     →  VITE_SUPABASE_ANON_KEY
+```
+
+### 5-2. URL — Settings → **Data API**
+
+사이드바 **INTEGRATIONS → Data API** 에 있습니다. (API Keys 화면에는 없습니다)
+
+```
+https://xxxxxxxxxxxx.supabase.co            →  VITE_SUPABASE_URL
+```
+
+> 브라우저 주소창의 `/project/<project-ref>/...` 에서 ref 를 떼어
+> `https://<ref>.supabase.co` 로 조합해도 같은 값입니다.
+
+### 이름이 바뀐 것에 대해
+
+Supabase 가 2025년에 키 체계를 개편했습니다.
+
+| 예전 이름 | 지금 이름 | 이 앱에서 |
+|---|---|---|
+| `anon` / `public` (`eyJhbGciOi…`) | **Publishable key** (`sb_publishable_…`) | **이것을 사용** |
+| `service_role` (`eyJhbGciOi…`) | **Secret key** (`sb_secret_…`) | **사용 금지** |
+
+`Legacy anon, service_role API keys` 탭에 가면 예전 `eyJ…` 형태의 anon 키도 그대로 있습니다.
+둘 다 동작하지만 레거시 키는 폐기 예정이므로 **Publishable 키를 쓰세요.**
+(설치된 `@supabase/supabase-js` 2.112 는 새 키 형식을 지원합니다.
+혹시 새 키로 로그인이 안 되면 레거시 anon 키로 바꿔 시험해 보세요.)
+
+> ### ⚠️ Secret key (`sb_secret_…`) 는 절대 쓰지 마세요
 >
 > 그 키는 **RLS를 전부 무시**합니다. 이 앱은 정적 사이트라 넣는 순간 브라우저 개발자도구에
 > 그대로 노출되고, URL 을 아는 누구나 테이블 전체를 읽고 지울 수 있게 됩니다.
-> `.env` 에는 **anon(publishable) 키만** 넣습니다.
 >
-> anon 키는 공개돼도 괜찮습니다. RLS 정책이 `auth.uid() is not null` 을 요구하므로
-> 로그인하지 않으면 아무 데이터도 읽히지 않습니다.
+> 반대로 Publishable 키는 공개돼도 괜찮습니다 — 화면에도
+> "Publishable keys can be safely shared publicly" 라고 적혀 있습니다.
+> RLS 정책이 `auth.uid() is not null` 을 요구하므로 로그인하지 않으면 아무 데이터도 읽히지 않습니다.
 
 ---
 
@@ -237,21 +263,38 @@ gh api -X POST repos/<계정>/taskboard-lite/pages -f build_type=workflow
 | Name | Value |
 |---|---|
 | `VITE_SUPABASE_URL` | 5단계의 Project URL |
-| `VITE_SUPABASE_ANON_KEY` | 5단계의 anon(publishable) 키 |
+| `VITE_SUPABASE_ANON_KEY` | 5단계의 Publishable key (sb_publishable_…) |
 
-### 8-3. Pages 켜기
+터미널을 쓰면 더 빠릅니다. 값을 물어보고, 입력한 값은 화면에 남지 않습니다.
 
-**Settings** → **Pages** → **Source** 를 **GitHub Actions** 로 변경합니다.
+```bash
+gh secret set VITE_SUPABASE_URL      --repo viralfactory/taskboard-lite
+gh secret set VITE_SUPABASE_ANON_KEY --repo viralfactory/taskboard-lite
+```
 
-### 8-4. 배포 확인
+> **Secrets 는 빌드 시점에 주입됩니다.** 등록만 하면 이미 배포된 파일은 그대로이므로,
+> 반드시 아래 8-4 로 재배포해야 반영됩니다.
 
-**Actions** 탭에서 `Deploy to GitHub Pages` 워크플로가 도는 것을 봅니다.
+### 8-3. Pages 켜기 — ✅ 완료됨
+
+**Settings** → **Pages** → **Source** 가 **GitHub Actions** 로 이미 설정돼 있습니다.
+
+### 8-4. 재배포
+
+```bash
+gh workflow run deploy.yml --repo viralfactory/taskboard-lite
+gh run watch --repo viralfactory/taskboard-lite
+```
+
 `npm ci → npm test → npm run build → deploy` 순서로 2~3분 걸립니다.
 
-완료되면 주소는 `https://<계정>.github.io/taskboard-lite/` 입니다.
+배포 주소는 <https://viralfactory.github.io/taskboard-lite/> 입니다.
 이 주소를 팀원 8명에게 전달하면 끝입니다.
 
 이후 `main` 에 push 할 때마다 자동으로 다시 배포됩니다.
+
+> **Secrets 등록 전에는 흰 화면이 정상입니다.** 개발자도구 Console 에
+> `VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY 가 설정되지 않았습니다` 가 찍힙니다.
 
 ---
 
