@@ -1,0 +1,266 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { listWeeklyReports, saveWeeklyReport } from '../lib/api'
+import { addWeeks, isoWeek, weekRange } from '../lib/dates'
+import { buildDigest, type WeeklyDigest } from '../lib/weekly'
+import { progressOf } from '../lib/progress'
+import SignalBadge from '../components/SignalBadge'
+import { useProfiles, useTasks, nameMap } from '../hooks/useTasks'
+import { useAuth } from '../hooks/useAuth'
+import type { Task } from '../lib/types'
+
+export default function Weekly() {
+  const { userId } = useAuth()
+  const qc = useQueryClient()
+  const { data: tasks = [] } = useTasks()
+  const { data: profiles = [] } = useProfiles()
+  const names = nameMap(profiles)
+
+  const [week, setWeek] = useState(isoWeek())
+  const [tab, setTab] = useState<'mine' | 'team'>('mine')
+  const { start, end } = weekRange(week)
+
+  const { data: reports = [] } = useQuery({
+    queryKey: ['weekly', week],
+    queryFn: () => listWeeklyReports(week),
+  })
+
+  const mineReport = reports.find((r) => r.user_id === userId)
+  const digest = useMemo(
+    () => (userId ? buildDigest(tasks, userId, week) : { done: [], doing: [], next: [] }),
+    [tasks, userId, week],
+  )
+
+  const [issueNote, setIssueNote] = useState('')
+  const [comment, setComment] = useState('')
+
+  useEffect(() => {
+    setIssueNote(mineReport?.issue_note ?? '')
+    setComment(mineReport?.comment ?? '')
+  }, [mineReport?.id, week])
+
+  const openIssues = useMemo(
+    () =>
+      tasks
+        .filter((t) => t.assignee_id === userId)
+        .flatMap((t) => (t.issues ?? []).filter((i) => i.status !== 'resolved').map((i) => ({ t, i }))),
+    [tasks, userId],
+  )
+
+  const save = useMutation({
+    mutationFn: (submit: boolean) =>
+      saveWeeklyReport({
+        user_id: userId!,
+        year_week: week,
+        comment,
+        issue_note: issueNote,
+        submit,
+      }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['weekly', week] }),
+  })
+
+  return (
+    <div className="max-w-3xl">
+      <div className="flex items-center gap-3 mb-5">
+        <h1 className="text-lg font-bold">주간보고</h1>
+        <div className="flex items-center gap-1 text-sm">
+          <button onClick={() => setWeek(addWeeks(week, -1))} className="btn text-slate-400">
+            ‹
+          </button>
+          <span className="font-medium">{week}</span>
+          <button onClick={() => setWeek(addWeeks(week, 1))} className="btn text-slate-400">
+            ›
+          </button>
+          <span className="text-xs text-slate-400 ml-1">
+            {start} ~ {end}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex gap-1.5 mb-5">
+        {(['mine', 'team'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`chip text-xs ${
+              tab === t ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'
+            }`}
+          >
+            {t === 'mine' ? '내 보고' : '팀 통합본'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'mine' ? (
+        <div className="space-y-5">
+          <AutoSections digest={digest} />
+
+          <Section title="4. 이슈 및 지원 요청" human>
+            {openIssues.length > 0 && (
+              <ul className="text-sm space-y-1 mb-2">
+                {openIssues.map(({ t, i }) => (
+                  <li key={i.id} className="text-slate-600">
+                    • [{i.type}] {i.content}{' '}
+                    <span className="text-slate-400">
+                      ({t.name}
+                      {i.impact_days > 0 ? ` · ${i.impact_days}일 영향` : ''})
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <textarea
+              className="field h-20 resize-none"
+              value={issueNote}
+              onChange={(e) => setIssueNote(e.target.value)}
+              placeholder="추가로 지원이 필요한 사항"
+            />
+          </Section>
+
+          <Section title="5. 특이사항 코멘트 (3줄 이내)" human>
+            <textarea
+              className="field h-20 resize-none"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+          </Section>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => save.mutate(true)}
+              disabled={save.isPending}
+              className="btn bg-slate-900 text-white"
+            >
+              제출
+            </button>
+            <button onClick={() => save.mutate(false)} className="btn border border-slate-300">
+              임시 저장
+            </button>
+            {mineReport?.submitted_at && (
+              <span className="text-xs text-emerald-600">
+                제출됨 · {mineReport.submitted_at.slice(0, 16).replace('T', ' ')}
+              </span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {profiles.map((p) => {
+            const d = buildDigest(tasks, p.id, week)
+            const r = reports.find((x) => x.user_id === p.id)
+            const empty = !d.done.length && !d.doing.length && !d.next.length && !r
+            return (
+              <div key={p.id} className="bg-white border border-slate-200 rounded-lg p-4">
+                <div className="flex items-baseline gap-2 mb-3">
+                  <span className="font-semibold text-sm">{p.name}</span>
+                  <span className="text-xs text-slate-400">{p.part}</span>
+                  <span className="flex-1" />
+                  <span className={`text-xs ${r?.submitted_at ? 'text-emerald-600' : 'text-slate-300'}`}>
+                    {r?.submitted_at ? '제출' : '미제출'}
+                  </span>
+                </div>
+                {empty ? (
+                  <p className="text-xs text-slate-300">기록 없음</p>
+                ) : (
+                  <div className="text-sm space-y-2">
+                    <Line label="완료" items={d.done.map((t) => `${t.name} (${t.deliverable})`)} />
+                    <Line
+                      label="진행"
+                      items={d.doing.map((t) => `${t.name} ${progressOf(t).actualPct}%`)}
+                    />
+                    <Line label="차주" items={d.next.map((t) => `${t.name} ~${t.due_date}`)} />
+                    {r?.issue_note && <Line label="이슈" items={[r.issue_note]} />}
+                    {r?.comment && <Line label="코멘트" items={[r.comment]} />}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          <p className="text-xs text-slate-400">
+            담당자 이름은 프로필 기준입니다. ({Object.keys(names).length}명)
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Line({ label, items }: { label: string; items: string[] }) {
+  if (!items.length) return null
+  return (
+    <div className="flex gap-2">
+      <span className="text-xs text-slate-400 w-10 shrink-0 pt-0.5">{label}</span>
+      <span className="text-slate-700">{items.join(' / ')}</span>
+    </div>
+  )
+}
+
+function Section({
+  title,
+  human,
+  children,
+}: {
+  title: string
+  human?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <h2 className="text-sm font-semibold">{title}</h2>
+        <span
+          className={`text-[10px] px-1.5 py-0.5 rounded ${
+            human ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400'
+          }`}
+        >
+          {human ? '직접 작성' : '자동'}
+        </span>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function AutoSections({ digest }: { digest: WeeklyDigest }) {
+  return (
+    <>
+      <Section title="1. 금주 완료 업무">
+        <TaskLines tasks={digest.done} render={(t) => `${t.name} — 산출물: ${t.deliverable}`} />
+      </Section>
+      <Section title="2. 진행 중 업무">
+        {digest.doing.length === 0 ? (
+          <p className="text-sm text-slate-300">없음</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {digest.doing.map((t) => {
+              const p = progressOf(t)
+              return (
+                <li key={t.id} className="flex items-center gap-2 text-sm">
+                  <span className="flex-1 truncate">{t.name}</span>
+                  <span className="text-slate-400 text-xs">
+                    {p.actualPct}% / 계획 {p.planPct}%
+                  </span>
+                  <SignalBadge signal={p.signal} />
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Section>
+      <Section title="3. 차주 계획">
+        <TaskLines tasks={digest.next} render={(t) => `${t.name} (~${t.due_date})`} />
+      </Section>
+    </>
+  )
+}
+
+function TaskLines({ tasks, render }: { tasks: Task[]; render: (t: Task) => string }) {
+  if (!tasks.length) return <p className="text-sm text-slate-300">없음</p>
+  return (
+    <ul className="space-y-1 text-sm">
+      {tasks.map((t) => (
+        <li key={t.id}>• {render(t)}</li>
+      ))}
+    </ul>
+  )
+}
