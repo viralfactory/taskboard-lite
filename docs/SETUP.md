@@ -80,8 +80,9 @@ git --version
    (카테고리 통합 + 사용자 추가 목록용)
 7. [`supabase/schema-v4.sql`](../supabase/schema-v4.sql) 실행 (데일리 스크럼 + 변경 이력)
 8. [`supabase/schema-v5.sql`](../supabase/schema-v5.sql) 실행 (업무 2단 구조 + 카테고리 정리)
+9. [`supabase/schema-v6.sql`](../supabase/schema-v6.sql) 실행 (카테고리 이름 정리)
 
-> **순서를 지켜야 합니다** — `schema.sql` → `v2` → `v3` → `v4` → `v5`
+> **순서를 지켜야 합니다** — `schema.sql` → `v2` → `v3` → `v4` → `v5` → `v6`
 
 **확인** — 같은 편집기에서 아래를 실행하세요.
 

@@ -22,10 +22,10 @@ export const TEMPLATES: Record<string, Record<string, string[]>> = {
     '데이터관리': ['작업 계획', '작업 수행', '결과 검증'],
   },
   // 이 대분류만 활동명을 사용자가 추가할 수 있다. 기본 4개.
-  '업무개선/역량': {
+  '업무개선/기타': {
     '프로세스개선': ['현황 분석', '개선안 수립', '적용', '효과 확인'],
+    '미팅':         ['안건 준비', '미팅 진행', '결과 공유'],
     '표준화':       ['현황 조사', '표준안 작성', '공유 및 적용'],
-    '교육수강':     ['수강 시작', '수강 완료', '학습 정리 공유'],
     '지식공유':     ['자료 준비', '공유 세션', '자료 배포'],
   },
 }
@@ -35,7 +35,7 @@ export const L1_LIST = Object.keys(TEMPLATES)
 export const ISSUE_TYPES = ['기술', '자원', '대외협의', '요건변경', '기타'] as const
 
 /** 사용자가 활동명(중분류)을 추가할 수 있는 유일한 대분류 */
-export const CUSTOM_L1 = '업무개선/역량'
+export const CUSTOM_L1 = '업무개선/기타'
 
 /** 사용자가 추가한 활동의 기본 체크포인트 — 등록 폼에서 그대로 고칠 수 있다 */
 export const DEFAULT_ACTIVITY_CHECKPOINTS = ['계획 수립', '수행', '결과 정리']
@@ -44,6 +44,7 @@ export const DEFAULT_ACTIVITY_CHECKPOINTS = ['계획 수립', '수행', '결과 
 export const MERGED_L1: Record<string, string> = {
   '개선활동': CUSTOM_L1,
   '역량개발': CUSTOM_L1,
+  '업무개선/역량': CUSTOM_L1,
   '프로젝트': '개발', // 업무 자체가 프로젝트이므로 개발로 흡수
 }
 

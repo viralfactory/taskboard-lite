@@ -16,7 +16,7 @@ GitHub Pages 정적 배포 + Supabase(Postgres + Auth). 서버 없음.
 
 1. Supabase 프로젝트 생성 (리전 **Seoul**)
 2. SQL Editor 에서 순서대로 실행 —
-   [`schema.sql`](supabase/schema.sql) → [`schema-v2.sql`](supabase/schema-v2.sql) → [`schema-v3.sql`](supabase/schema-v3.sql) → [`schema-v4.sql`](supabase/schema-v4.sql)
+   [`schema.sql`](supabase/schema.sql) → [`v2`](supabase/schema-v2.sql) → [`v3`](supabase/schema-v3.sql) → [`v4`](supabase/schema-v4.sql) → [`v5`](supabase/schema-v5.sql) → [`v6`](supabase/schema-v6.sql)
 3. Authentication > Email 에서 `Confirm email` **OFF**, `Allow new users to sign up` **OFF**
 4. Authentication > Users 에서 팀원 8명 생성 (**Auto Confirm User 체크**)
 5. 로컬 실행
@@ -59,7 +59,7 @@ Publishable key(구 anon key)만 사용합니다. **Secret key(`sb_secret_…`) 
 [`src/lib/categories.ts`](src/lib/categories.ts) 의 `TEMPLATES` 만 수정하고 push 하면 됩니다.
 DB 작업은 필요 없습니다. 산출물은 각 템플릿의 **마지막 항목**으로 자동 설정됩니다.
 
-**`업무개선/역량` 의 활동명과 장애의 시스템명은 화면에서 바로 추가**할 수 있습니다
+**`업무개선/기타` 의 활동명과 장애의 시스템명은 화면에서 바로 추가**할 수 있습니다
 (등록 폼 → `전체 ▾` 또는 `+ 시스템`). 추가한 항목은 팀 전체가 공유합니다.
 
 ## 4. 개발 명령
