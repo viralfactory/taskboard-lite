@@ -246,7 +246,7 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
         <AddLine
           value={newTodo}
           setValue={setNewTodo}
-          placeholder="업무 외 할 일 덧붙이기 (예: 배포 리허설 참관)"
+          placeholder="업무 외 할 일 덧붙이기 (예: 배포 리허설 참여)"
           onSubmit={(v) => {
             addItem.mutate({ section: 'todo', label: v, order: items.length })
             setNewTodo('')
