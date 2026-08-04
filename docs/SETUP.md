@@ -199,24 +199,36 @@ admin 이 갖는 권한은 **업무 삭제 하나뿐**입니다. 그 외에는 8
 
 ### 8-1. 저장소 만들고 올리기
 
+**이 저장소는 이미 만들어져 있습니다** — <https://github.com/viralfactory/taskboard-lite>
+이후 변경은 아래처럼 push 하면 자동 배포됩니다.
+
 ```bash
 cd /Users/milliontube/Documents/PMSchedule
-git init
-git add .
-git commit -m "TaskBoard Lite 최초 구현"
-git branch -M main
-
-# GitHub 에서 taskboard-lite 저장소를 만든 뒤 (README 체크 해제):
-git remote add origin https://github.com/<계정>/taskboard-lite.git
-git push -u origin main
+git add -A
+git commit -m "변경 내용"
+git push
 ```
+
+<details>
+<summary>처음부터 다시 만들어야 한다면</summary>
+
+```bash
+git init && git add . && git commit -m "최초 구현" && git branch -M main
+gh repo create taskboard-lite --public --source=. --remote=origin --push
+gh api -X POST repos/<계정>/taskboard-lite/pages -f build_type=workflow
+```
+</details>
 
 > **저장소 이름을 `taskboard-lite` 가 아닌 것으로 만들었다면**
 > `vite.config.ts` 의 `base` 를 `'/실제저장소이름/'` 으로 고치고 다시 push 하세요.
 > 이게 안 맞으면 배포된 페이지가 흰 화면으로 나옵니다.
 
-> 저장소를 **Private 으로 만들어도 Pages 주소는 공개**입니다 (Free 플랜 기준).
-> 소스는 가려지지만 앱은 누구나 열 수 있으므로, 3단계의 로그인 설정이 그대로 중요합니다.
+> **Free 플랜에서 Pages 는 Public 저장소에서만 동작합니다.** Private 저장소로 Pages 를
+> 쓰려면 GitHub Pro 이상이 필요합니다. 이 프로젝트는 Public 으로 만들었습니다 —
+> `.env` 는 커밋되지 않고 Supabase 키는 Actions Secrets 로만 주입되므로 저장소에 비밀은 없습니다.
+>
+> 다만 **배포된 앱 주소는 어느 경우든 인터넷에 공개**됩니다. 3단계의 로그인 설정
+> (셀프 가입 OFF)이 팀 데이터를 지키는 유일한 장치인 이유입니다.
 
 ### 8-2. Secrets 등록
 
