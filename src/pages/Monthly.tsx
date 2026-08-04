@@ -13,6 +13,7 @@ import { addMonths, addWeeks, isoWeek, monthRange, todayStr, yearMonth } from '.
 import { buildMonthlyReport } from '../lib/monthly'
 import { SEVERITY } from '../lib/constants'
 import { useTasks } from '../hooks/useTasks'
+import { friendlyError } from '../lib/errors'
 import { useAuth } from '../hooks/useAuth'
 
 const STATUS_CLASS: Record<string, string> = {
@@ -84,7 +85,7 @@ export default function Monthly() {
         confirm,
       }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['monthly', ym] }),
-    onError: (e: Error) => setErr(e.message),
+    onError: (e: Error) => setErr(friendlyError(e)),
   })
 
   const addPlan = useMutation({
@@ -119,7 +120,7 @@ export default function Monthly() {
         downloadBlob(blob, `팀작업현황_${ym}.xlsx`)
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : '생성에 실패했습니다.')
+      setErr(friendlyError(e))
     } finally {
       setBusy('')
     }

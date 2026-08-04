@@ -5,6 +5,7 @@ import { CAUSE_TYPES, SEVERITY, SEVERITY_CRITERIA, SEVERITY_ORDER, SYSTEMS, type
 import { addDays, todayStr } from '../lib/dates'
 import { useAuth } from '../hooks/useAuth'
 import { optionErrorText, useCustomOptions } from '../hooks/useCustomOptions'
+import { friendlyError } from '../lib/errors'
 
 // ─────────────────────────────────────────────────────────────
 // SPEC-V2 4.1 — 장애 등록 20초.
@@ -95,7 +96,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
         onClose()
       }
     },
-    onError: (e: Error) => setErr(e.message),
+    onError: (e: Error) => setErr(friendlyError(e)),
   })
 
   function onKeyDown(e: React.KeyboardEvent) {

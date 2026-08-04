@@ -15,13 +15,15 @@ import { addMonths, diffDays, monthRange, recentMonths, todayStr, yearMonth } fr
 import { diffText } from '../lib/monthly'
 import IncidentForm from '../components/IncidentForm'
 import { useCustomOptions } from '../hooks/useCustomOptions'
+import { friendlyError } from '../lib/errors'
 import type { Incident } from '../lib/types'
 
 export default function Incidents() {
   const qc = useQueryClient()
-  const { data: incidents = [], isLoading } = useQuery({
+  const { data: incidents = [], isLoading, error: loadError } = useQuery({
     queryKey: ['incidents'],
     queryFn: listIncidents,
+    retry: false,
   })
 
   const [ym, setYm] = useState(yearMonth())
@@ -95,6 +97,12 @@ export default function Incidents() {
           {formOpen ? '등록 폼 닫기' : '+ 장애 등록'} <span className="opacity-50 text-xs">I</span>
         </button>
       </div>
+
+      {loadError && (
+        <div className="mb-4 rounded-md bg-error-container text-on-error-container px-4 py-3 text-body">
+          {friendlyError(loadError)}
+        </div>
+      )}
 
       <div className="grid md:grid-cols-[1fr_20rem] gap-4 mb-5">
         {/* 등급별 카드 */}

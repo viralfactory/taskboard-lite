@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createCustomOption, deleteCustomOption, listCustomOptions } from '../lib/api'
 import { useAuth } from './useAuth'
+import { friendlyError } from '../lib/errors'
 import type { CustomOption } from '../lib/types'
 
 /**
@@ -10,7 +11,11 @@ import type { CustomOption } from '../lib/types'
 export function useCustomOptions(kind: CustomOption['kind']) {
   const qc = useQueryClient()
   const { userId } = useAuth()
-  const { data = [] } = useQuery({ queryKey: ['customOptions'], queryFn: listCustomOptions })
+  const { data = [] } = useQuery({
+    queryKey: ['customOptions'],
+    queryFn: listCustomOptions,
+    retry: false, // 테이블이 없어도 기본 목록으로 계속 쓸 수 있어야 한다
+  })
   const items = data.filter((o) => o.kind === kind)
 
   const invalidate = () => void qc.invalidateQueries({ queryKey: ['customOptions'] })
@@ -28,6 +33,5 @@ export function useCustomOptions(kind: CustomOption['kind']) {
 
 /** 중복 등록 오류를 사람이 읽을 수 있는 문구로 */
 export function optionErrorText(e: unknown): string {
-  const msg = e instanceof Error ? e.message : String(e)
-  return /duplicate|unique/i.test(msg) ? '이미 있는 이름입니다.' : msg
+  return friendlyError(e)
 }

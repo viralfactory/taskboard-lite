@@ -15,6 +15,7 @@ import { newItemsSince, snapshotItems } from '../lib/daily'
 import { useProfiles, useTasks } from '../hooks/useTasks'
 import { useAuth } from '../hooks/useAuth'
 import HistoryList from '../components/HistoryList'
+import { friendlyError } from '../lib/errors'
 import TaskForm from '../components/TaskForm'
 import type { DailyItem, DailyReport } from '../lib/types'
 
@@ -26,10 +27,12 @@ export default function Daily() {
 
   const [date, setDate] = useState(lastWorkday())
   const [tab, setTab] = useState<'mine' | 'team'>('mine')
+  const [err, setErr] = useState('')
 
-  const { data: reports = [], isLoading } = useQuery({
+  const { data: reports = [], isLoading, error: loadError } = useQuery({
     queryKey: ['daily', date],
     queryFn: () => listDailyReports(date),
+    retry: false,
   })
 
   const mine = reports.find((r) => r.user_id === userId)
@@ -40,7 +43,11 @@ export default function Daily() {
 
   const create = useMutation({
     mutationFn: () => createDailyReport(userId!, date, snapshotItems(tasks, userId!, date)),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      setErr('')
+      invalidate()
+    },
+    onError: (e: Error) => setErr(friendlyError(e)),
   })
 
   return (
@@ -62,6 +69,12 @@ export default function Daily() {
         {!isWorkday(date) && <span className="text-xs text-signal-yellow">주말입니다</span>}
         {date < todayStr() && <span className="text-xs text-on-surface-variant">지난 날짜 — 수정하면 이력이 남습니다</span>}
       </div>
+
+      {(err || loadError) && (
+        <div className="mb-4 rounded-md bg-error-container text-on-error-container px-4 py-3 text-body">
+          {err || friendlyError(loadError)}
+        </div>
+      )}
 
       <div className="flex gap-1.5 mb-5">
         {(['mine', 'team'] as const).map((t) => (
@@ -87,7 +100,7 @@ export default function Daily() {
                 : '가져올 내 업무가 없어 빈 일지로 만들어집니다. 만든 뒤에 업무를 등록할 수 있습니다.'}
             </p>
             <button onClick={() => create.mutate()} disabled={create.isPending} className="btn-filled">
-              {create.isPending ? '생성 중…' : '일지 생성'}
+              {create.isPending ? '생성 중…' : err ? '다시 시도' : '일지 생성'}
             </button>
           </div>
         ) : (
@@ -127,6 +140,7 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
   const [newDone, setNewDone] = useState('')
   const [histOpen, setHistOpen] = useState(false)
   const [taskFormOpen, setTaskFormOpen] = useState(false)
+  const [err, setErr] = useState('')
 
   useEffect(() => {
     setIssueNote(report.issue_note ?? '')
@@ -140,7 +154,11 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
   const save = useMutation({
     mutationFn: (patch: Partial<DailyReport>) =>
       saveDailyReport(report, patch, { userId: userId!, today: todayStr() }),
-    onSuccess: onChanged,
+    onSuccess: () => {
+      setErr('')
+      onChanged()
+    },
+    onError: (e: Error) => setErr(friendlyError(e)),
   })
   const toggle = useMutation({
     mutationFn: (v: { item: DailyItem; next: boolean }) =>
@@ -174,6 +192,10 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
 
   return (
     <div className="space-y-4">
+      {err && (
+        <div className="rounded-md bg-error-container text-on-error-container px-4 py-3 text-body">{err}</div>
+      )}
+
       <label className="flex items-center gap-2 text-sm bg-surface-lowest border border-outline-variant rounded-md px-4 py-2.5 cursor-pointer">
         <input
           type="checkbox"

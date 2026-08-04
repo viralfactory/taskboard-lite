@@ -14,6 +14,7 @@ import { endOfMonth, nextFriday, thisFriday, todayStr } from '../lib/dates'
 import { pushRecentCat, recentCats, type CatPair } from '../lib/recent'
 import { useAuth } from '../hooks/useAuth'
 import { optionErrorText, useCustomOptions } from '../hooks/useCustomOptions'
+import { friendlyError } from '../lib/errors'
 import type { CustomOption } from '../lib/types'
 
 // ─────────────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
         onClose()
       }
     },
-    onError: (e: Error) => setErr(e.message),
+    onError: (e: Error) => setErr(friendlyError(e)),
   })
 
   function onKeyDown(e: React.KeyboardEvent) {
