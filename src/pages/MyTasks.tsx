@@ -58,6 +58,8 @@ export default function MyTasks() {
       checkpoints: t.checkpoints.map((c) => c.name),
       deliverable: t.deliverable,
       assigneeId: t.assignee_id,
+      stage: t.stage,
+      isAgenda: t.is_agenda,
     })
     setFormOpen(true)
   }

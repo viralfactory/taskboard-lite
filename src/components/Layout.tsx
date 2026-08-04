@@ -6,7 +6,9 @@ import { useAuth } from '../hooks/useAuth'
 const NAV = [
   { to: '/', label: '내 업무', end: true },
   { to: '/team', label: '팀 현황', end: false },
+  { to: '/incidents', label: '장애 관리', end: false },
   { to: '/weekly', label: '주간보고', end: false },
+  { to: '/monthly', label: '월간보고', end: false },
   { to: '/report', label: '리포트', end: false },
 ]
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Workbook } from 'exceljs'
 import { buildWorkbook, filterTasks } from './excel'
-import type { Issue, Profile, Task, WeeklyReport } from './types'
+import type { Incident, Issue, Profile, Task, WeeklyReport } from './types'
 
 const TODAY = '2026-08-04'
 
@@ -31,6 +31,10 @@ function task(over: Partial<Task>): Task {
       { id: 3, task_id: 1, name: '설계서 확정', is_done: false, done_at: null, sort_order: 2 },
     ],
     issues: [],
+    progress_note: null,
+    stage: 'dev',
+    initial_due_date: '2026-08-07',
+    is_agenda: true,
     ...over,
   }
 }
@@ -62,6 +66,42 @@ const issues: Issue[] = [
     status: 'new',
     created_at: '2026-08-03T00:00:00Z',
     resolved_at: null,
+    title: '외부 연동',
+    needs_decision: false,
+    sort_order: 0,
+  },
+]
+
+const incidents: Incident[] = [
+  {
+    id: 1,
+    occurred_at: '2026-08-03',
+    title: '결제 승인 지연',
+    system: 'POVAS',
+    severity: 'critical',
+    cause_type: '외부연동',
+    action: 'PG사 재처리 요청',
+    status: 'responding',
+    recurrence_action: null,
+    related_task_id: null,
+    reporter_id: 'u1',
+    resolved_at: null,
+    created_at: '2026-08-03T00:00:00Z',
+  },
+  {
+    id: 2,
+    occurred_at: '2026-09-01',
+    title: '기간 밖 장애',
+    system: 'WEB',
+    severity: 'normal',
+    cause_type: null,
+    action: null,
+    status: 'responding',
+    recurrence_action: null,
+    related_task_id: null,
+    reporter_id: 'u1',
+    resolved_at: null,
+    created_at: '2026-09-01T00:00:00Z',
   },
 ]
 
@@ -82,6 +122,7 @@ async function build(filterOver: Partial<Parameters<typeof buildWorkbook>[0]['fi
     issues,
     profiles,
     reports,
+    incidents,
     weeks: ['2026-W32'],
     filter: { from: '2026-08-03', to: '2026-08-09', assigneeId: 'all', signal: 'all', ...filterOver },
     today: TODAY,
@@ -107,9 +148,29 @@ describe('filterTasks', () => {
 })
 
 describe('buildWorkbook', () => {
-  it('시트 4개를 만든다', async () => {
+  it('시트 5개를 만든다 (v2에서 장애 추가)', async () => {
     const wb = await build()
-    expect(wb.worksheets.map((w) => w.name)).toEqual(['업무현황', '주간보고', '이슈', '요약'])
+    expect(wb.worksheets.map((w) => w.name)).toEqual(['업무현황', '주간보고', '이슈', '요약', '장애'])
+  })
+
+  it('장애 시트에 등급 배경색과 경과일이 들어간다', async () => {
+    const wb = await build()
+    const ws = wb.getWorksheet('장애')!
+    const row = ws.getRow(2)
+    const v = row.values as unknown[]
+    expect(v[1]).toBe('2026-08-03')
+    expect(v[2]).toBe('결제 승인 지연')
+    expect(v[4]).toBe('매우심각')
+    expect(v[7]).toBe('조치중')
+    expect(v[9]).toBe(1) // 8/3 발생 → 8/4 기준 1일
+    expect((row.getCell(4).fill as { fgColor: { argb: string } }).fgColor.argb).toBe('FFFDECEC')
+  })
+
+  it('기간 밖의 장애는 시트에 실리지 않는다', async () => {
+    const wb = await build()
+    const ws = wb.getWorksheet('장애')!
+    // 2건 중 9월 발생분은 제외되어 데이터는 1행뿐
+    expect(ws.rowCount).toBe(2)
   })
 
   it('모든 시트에 1행 틀고정과 자동필터가 걸린다', async () => {

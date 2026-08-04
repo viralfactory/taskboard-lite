@@ -74,6 +74,9 @@ git --version
 3. 편집기에 붙여넣고 **Run** (또는 `Ctrl/Cmd + Enter`)
 4. `Success. No rows returned` 이 나오면 성공입니다.
 
+5. **New query** 를 다시 열고 [`supabase/schema-v2.sql`](../supabase/schema-v2.sql) 전체를 붙여넣고 Run
+   (운영·장애 관리 + 월간보고용. **반드시 `schema.sql` 다음에** 실행하세요)
+
 **확인** — 같은 편집기에서 아래를 실행하세요.
 
 ```sql
@@ -81,10 +84,23 @@ select tablename, policyname, cmd from pg_policies
 where schemaname = 'public' order by tablename, cmd;
 ```
 
-`profiles / tasks / checkpoints / issues / weekly_reports` 각 4개씩 **총 20행**이 나와야 합니다.
-**Table Editor** 메뉴에서도 테이블 5개가 보입니다.
+8개 테이블 × 4개 정책 = **총 32행**이 나와야 합니다.
+(v1: `profiles` `tasks` `checkpoints` `issues` `weekly_reports` /
+ v2: `incidents` `monthly_reports` `next_month_plans`)
 
-> 이 스크립트는 여러 번 실행해도 안전합니다. 나중에 정책을 손봤다가 되돌리고 싶으면 다시 Run 하면 됩니다.
+v2 컬럼이 붙었는지도 확인하세요. **4행**이 나와야 합니다.
+
+```sql
+select column_name from information_schema.columns
+where table_name = 'tasks'
+  and column_name in ('progress_note','stage','initial_due_date','is_agenda');
+```
+
+> 두 스크립트 모두 여러 번 실행해도 안전합니다. 나중에 정책을 손봤다가 되돌리고 싶으면 다시 Run 하면 됩니다.
+
+> **이미 v1 으로 운영 중이었다면** `schema-v2.sql` 만 실행하면 됩니다.
+> 기존 업무의 `initial_due_date` 는 현재 마감일로 자동 백필되므로,
+> 그 이전에 변경된 마감일 이력은 보고서에 `7/13 → 8/6` 형태로 나타나지 않습니다.
 
 ---
 
@@ -316,9 +332,29 @@ gh run watch --repo viralfactory/taskboard-lite
 | 10 | 체크포인트 체크 | 진척률·신호등 즉시 변경 |
 | 11 | 마감일 변경 | 사유 입력 강제, 변경 횟수 증가 |
 | 12 | 주간보고 | 이번 주 완료 건이 실제로 집계됨 |
-| 13 | 엑셀 다운로드 | 4개 시트, 신호 열 배경색, 1행 고정 |
+| 13 | 엑셀 다운로드 | 5개 시트, 신호·등급 열 배경색, 1행 고정 |
 | 14 | 엑셀 시트 4(요약) | 그대로 임원에게 보낼 수 있는 수준인지 눈으로 확인 |
-| 15 | 개발자도구 → Network | `service_role` 키가 어디에도 없음 |
+| 15 | 개발자도구 → Network | `service_role`/`sb_secret` 키가 어디에도 없음 |
+
+### v2 추가 확인 (SPEC-V2 10장)
+
+| # | 확인 항목 | 기대 |
+|---|---|---|
+| 16 | 장애 1건 등록 시간 | **20초 이내** |
+| 17 | 원인유형·조치 미입력 상태로 저장 | 가능 |
+| 18 | 매우심각 + 24시간 조치 미입력 | 목록에서 행 강조 |
+| 19 | 업무 등록 폼의 보이는 입력 | 여전히 4개 (업무명·카테고리·마감일·단계) |
+| 20 | 마감일 변경 후 월간보고 일정 칸 | `7/13 → 8/6 dev` 형식 |
+| 21 | 진척 0% + 마감 미도래 / 마감 경과 | 진행중 / 지연 |
+| 22 | SUMMARY 밴드의 장애 전월 대비 증감 | 실제 데이터와 일치 |
+| 23 | 월별 추이 차트 | 최근 7개월, 당월만 진한 색 |
+| 24 | **PPTX 를 PowerPoint 에서 열기** | 손상 경고 없음 |
+| 25 | 안건 15건 초과 | 표가 슬라이드를 넘치지 않고 각주에 `외 n건` |
+| 26 | **07월 실제 보고서와 나란히 놓고 육안 비교** | 누락 항목 없음 |
+
+> 26번이 v2 의 최종 합격 기준입니다. 07월 데이터를 그대로 입력해 생성한 PPTX 가
+> 기존 수작업 보고서와 같은 내용을 담고 있으면 이관할 수 있습니다.
+> 이관은 1개월 병행 → 2개월 도구 정본 → 3개월 수작업 중단 순서를 권합니다 (SPEC-V2 12장).
 
 > 5번이 30초를 넘으면 기획서 7.7절의 순서대로 필드를 덜어냅니다.
 > ① 체크포인트 확인 생략 → ② 대분류 5개를 3개로 → ③ 업무명만으로 저장 가능하게.

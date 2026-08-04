@@ -6,7 +6,8 @@ GitHub Pages 정적 배포 + Supabase(Postgres + Auth). 서버 없음.
 | 문서 | 내용 |
 |---|---|
 | [`docs/SETUP.md`](docs/SETUP.md) | **설치·환경구축 전체 안내** — Supabase 생성부터 배포·문제해결까지 |
-| [`docs/SPEC.md`](docs/SPEC.md) | 기획 원본 |
+| [`docs/SPEC.md`](docs/SPEC.md) | 기획 원본 (v1) |
+| [`docs/SPEC-V2.md`](docs/SPEC-V2.md) | v2 델타 — 운영·장애 관리 + 월간보고 자동 생성 |
 | [`CLAUDE.md`](CLAUDE.md) | 개발 규칙 · 기획서와 다르게 구현한 부분 |
 
 ## 1. 빠른 시작
@@ -14,7 +15,8 @@ GitHub Pages 정적 배포 + Supabase(Postgres + Auth). 서버 없음.
 처음이라면 [`docs/SETUP.md`](docs/SETUP.md) 를 순서대로 따라가세요. 요약하면:
 
 1. Supabase 프로젝트 생성 (리전 **Seoul**)
-2. SQL Editor 에 [`supabase/schema.sql`](supabase/schema.sql) 전체 실행
+2. SQL Editor 에 [`supabase/schema.sql`](supabase/schema.sql) 실행 후
+   이어서 [`supabase/schema-v2.sql`](supabase/schema-v2.sql) 실행
 3. Authentication > Email 에서 `Confirm email` **OFF**, `Allow new users to sign up` **OFF**
 4. Authentication > Users 에서 팀원 8명 생성 (**Auto Confirm User 체크**)
 5. 로컬 실행
@@ -33,14 +35,17 @@ Publishable key(구 anon key)만 사용합니다. **Secret key(`sb_secret_…`) 
 |---|---|---|
 | 내 업무 | `#/` | 등록·수정·복제, 체크포인트 토글, 이슈 등록 |
 | 팀 현황 | `#/team` | 전체 업무, 🔴 상단 고정, 담당자·카테고리·신호 필터 |
-| 주간보고 | `#/weekly` | 자동 초안 + 이슈·코멘트 입력 후 제출 / 팀 통합본 |
-| 리포트 | `#/report` | 조건 선택 → 미리보기 → 엑셀 4시트 다운로드 |
+| 장애 관리 | `#/incidents` | 20초 등록, 등급별 카드, 7개월 추이, 24시간 미조치 강조 |
+| 주간보고 | `#/weekly` | 자동 초안 + 이슈·코멘트 + 주요 진행 내용 입력 |
+| 월간보고 | `#/monthly` | 자동 집계 미리보기 → **PPTX / 엑셀** 다운로드 |
+| 리포트 | `#/report` | 조건 선택 → 미리보기 → 엑셀 5시트 다운로드 |
 
 ### 등록 단축키
 
 | 키 | 동작 |
 |---|---|
 | `N` | 새 업무 등록 폼 열기 |
+| `I` | 장애 등록 폼 열기 (장애 관리 화면) |
 | `1`~`4` | 포커스된 칩 그룹에서 n번째 선택 |
 | `Ctrl+Enter` | 저장 후 폼 유지 (연속 등록) |
 | `Enter` | 저장 후 닫기 |
@@ -57,6 +62,6 @@ DB 작업은 필요 없습니다. 산출물은 각 템플릿의 **마지막 항�
 
 ```bash
 npm run dev     # 개발 서버
-npm test        # 진척 로직 · 엑셀 생성 단위 테스트 (26개)
+npm test        # 단위 테스트 61개 (진척·월간집계·엑셀·PPTX)
 npm run build   # 타입체크 + 프로덕션 빌드
 ```

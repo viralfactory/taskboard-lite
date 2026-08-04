@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { listWeeklyReports, saveWeeklyReport } from '../lib/api'
+import { listWeeklyReports, saveWeeklyReport, updateTask } from '../lib/api'
 import { addWeeks, isoWeek, weekRange } from '../lib/dates'
 import { buildDigest, type WeeklyDigest } from '../lib/weekly'
 import { progressOf } from '../lib/progress'
@@ -95,6 +95,9 @@ export default function Weekly() {
         <div className="space-y-5">
           <AutoSections digest={digest} />
 
+          {/* progress_note 는 등록 시 받지 않는다. 이미 회고하는 이 시점에만 입력한다. */}
+          <ProgressNotes tasks={[...digest.doing, ...digest.done]} />
+
           <Section title="4. 이슈 및 지원 요청" human>
             {openIssues.length > 0 && (
               <ul className="text-sm space-y-1 mb-2">
@@ -182,6 +185,47 @@ export default function Weekly() {
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * 월간보고 「주요 진행 내용」의 원천. 2줄 이내로 제한한다.
+ * 여기서 안 쓰면 월간보고 표의 그 칸이 빈칸으로 나간다.
+ */
+function ProgressNotes({ tasks }: { tasks: Task[] }) {
+  const qc = useQueryClient()
+  const save = useMutation({
+    mutationFn: (v: { id: number; note: string }) => updateTask(v.id, { progress_note: v.note }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['tasks'] }),
+  })
+
+  if (!tasks.length) return null
+  const agenda = tasks.filter((t) => t.is_agenda !== false)
+  if (!agenda.length) return null
+
+  return (
+    <Section title="주요 진행 내용 (월간보고용)" human>
+      <p className="text-xs text-slate-400 mb-3">
+        결과 중심으로 2줄 이내. 월간보고 「1. 개발 안건별 진행 현황」 표에 그대로 들어갑니다.
+      </p>
+      <div className="space-y-2">
+        {agenda.map((t) => (
+          <div key={t.id}>
+            <div className="text-xs text-slate-500 mb-1 truncate">{t.name}</div>
+            <textarea
+              className="field h-14 resize-none text-sm"
+              defaultValue={t.progress_note ?? ''}
+              maxLength={200}
+              placeholder="예: 결제 연동 개발 완료, 운영 반영 대기"
+              onBlur={(e) => {
+                const v = e.target.value.trim()
+                if (v !== (t.progress_note ?? '')) save.mutate({ id: t.id, note: v })
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </Section>
   )
 }
 

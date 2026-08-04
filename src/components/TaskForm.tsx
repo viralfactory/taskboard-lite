@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createTask, listProfiles } from '../lib/api'
 import { checkpointsOf, deliverableOf, L1_LIST, TEMPLATES } from '../lib/categories'
+import { STAGES } from '../lib/constants'
 import { endOfMonth, nextFriday, thisFriday, todayStr } from '../lib/dates'
 import { pushRecentCat, recentCats, type CatPair } from '../lib/recent'
 import { useAuth } from '../hooks/useAuth'
@@ -21,6 +22,8 @@ export interface TaskFormSeed {
   checkpoints?: string[]
   deliverable?: string
   assigneeId?: string
+  stage?: string
+  isAgenda?: boolean
 }
 
 type DueMode = 'fri' | 'nextfri' | 'eom' | 'custom'
@@ -60,6 +63,8 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
   const [startDate, setStartDate] = useState(seed?.startDate ?? todayStr())
   const [deliverable, setDeliverable] = useState(seed?.deliverable ?? deliverableOf(cat.l1, cat.l2))
   const [assigneeId, setAssigneeId] = useState(seed?.assigneeId ?? userId ?? '')
+  const [stage, setStage] = useState<string>(seed?.stage ?? 'dev')
+  const [isAgenda, setIsAgenda] = useState(seed?.isAgenda ?? true)
   const [moreOpen, setMoreOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [err, setErr] = useState('')
@@ -101,6 +106,8 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
           due_date: dueDate,
           deliverable: deliverable || cps[cps.length - 1],
           checkpoints: cps,
+          stage,
+          is_agenda: isAgenda,
         },
         userId,
       )
@@ -278,7 +285,31 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
           </div>
         </div>
 
-        {/* 4. 체크포인트 (템플릿 자동 생성) */}
+        {/* 4. 단계 (stage) — 칩 1탭 */}
+        <div className="mb-5">
+          <div className="text-xs text-slate-500 mb-1.5">단계</div>
+          <div
+            className="flex flex-wrap gap-1.5"
+            tabIndex={-1}
+            onKeyDown={(e) => chipGroupKeys(e, (i) => setStage(STAGES[i]), STAGES.length)}
+          >
+            {STAGES.map((s, i) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setStage(s)}
+                className={`chip ${
+                  stage === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. 체크포인트 (템플릿 자동 생성) */}
         <div className="mb-4">
           <div className="text-xs text-slate-500 mb-1.5">체크포인트 (자동)</div>
           <div className="space-y-1.5">
@@ -320,7 +351,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
           className="text-xs text-slate-400 mb-3"
           tabIndex={-1}
         >
-          {moreOpen ? '▾' : '▸'} 담당자·시작일·산출물 변경
+          {moreOpen ? '▾' : '▸'} 담당자·시작일·산출물·월간보고 포함 변경
         </button>
 
         {moreOpen && (
@@ -356,6 +387,18 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                 onChange={(e) => setDeliverable(e.target.value)}
               />
             </div>
+            <label className="col-span-2 flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAgenda}
+                onChange={(e) => setIsAgenda(e.target.checked)}
+                className="accent-slate-900"
+              />
+              월간보고 &apos;개발 안건&apos;에 포함
+              <span className="text-xs text-slate-400">
+                (정기점검·사용자지원처럼 상시 반복이면 해제)
+              </span>
+            </label>
           </div>
         )}
 

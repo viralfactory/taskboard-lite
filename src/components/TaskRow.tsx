@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { addCheckpoint, deleteCheckpoint, deleteTask, toggleCheckpoint, updateTask } from '../lib/api'
 import { progressOf } from '../lib/progress'
+import { STAGES } from '../lib/constants'
 import { diffDays, todayStr } from '../lib/dates'
 import SignalBadge, { ProgressBar } from './SignalBadge'
 import DueChangeModal from './DueChangeModal'
@@ -64,6 +65,8 @@ export default function TaskRow({
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5 truncate">
               {task.cat_l1}&gt;{task.cat_l2}
+              {task.stage && task.stage !== 'dev' && ` · ${task.stage}`}
+              {task.is_agenda === false && ' · 보고제외'}
               {assigneeName && ` · ${assigneeName}`} · ~{task.due_date}
               {task.status !== 'done' && dLeft >= 0 && dLeft <= 3 && (
                 <span className="text-amber-600"> · D-{dLeft}</span>
@@ -190,6 +193,25 @@ export default function TaskRow({
                   </option>
                 ))}
               </select>
+              <select
+                className="chip border-slate-300 text-xs"
+                value={task.stage || 'dev'}
+                onChange={(e) => patch.mutate({ stage: e.target.value })}
+              >
+                {STAGES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <label className="chip border-slate-300 text-xs flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={task.is_agenda !== false}
+                  onChange={(e) => patch.mutate({ is_agenda: e.target.checked })}
+                />
+                월간보고 안건
+              </label>
               <button onClick={() => setDueOpen(true)} className="chip border-slate-300 text-xs">
                 마감일 변경
               </button>

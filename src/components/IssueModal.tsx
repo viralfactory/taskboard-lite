@@ -6,14 +6,23 @@ import type { Task } from '../lib/types'
 
 export default function IssueModal({ task, onClose }: { task: Task; onClose: () => void }) {
   const qc = useQueryClient()
+  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [type, setType] = useState<string>(ISSUE_TYPES[0])
   const [impact, setImpact] = useState(0)
+  const [needsDecision, setNeedsDecision] = useState(false)
   const [err, setErr] = useState('')
 
   const save = useMutation({
     mutationFn: () =>
-      createIssue({ task_id: task.id, content: content.trim(), type, impact_days: impact }),
+      createIssue({
+        task_id: task.id,
+        title: title.trim(),
+        content: content.trim(),
+        type,
+        impact_days: impact,
+        needs_decision: needsDecision,
+      }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['tasks'] })
       void qc.invalidateQueries({ queryKey: ['issues'] })
@@ -28,12 +37,19 @@ export default function IssueModal({ task, onClose }: { task: Task; onClose: () 
         <h2 className="font-semibold mb-1">이슈 등록</h2>
         <p className="text-xs text-slate-400 mb-4 truncate">{task.name}</p>
 
+        <input
+          className="field mb-2"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="제목 (예: 스마트로 키인 결제)"
+          autoFocus
+        />
+
         <textarea
           className="field h-24 resize-none mb-3"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="무엇이 막혀 있는지 한두 줄로"
-          autoFocus
         />
 
         <div className="flex gap-2 mb-4">
@@ -56,6 +72,17 @@ export default function IssueModal({ task, onClose }: { task: Task; onClose: () 
             />
           </div>
         </div>
+
+        <label className="flex items-center gap-2 text-sm mb-4 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={needsDecision}
+            onChange={(e) => setNeedsDecision(e.target.checked)}
+            className="accent-slate-900"
+          />
+          의사결정 필요 사항
+          <span className="text-xs text-slate-400">(월간보고 3번에 올라감)</span>
+        </label>
 
         {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
 

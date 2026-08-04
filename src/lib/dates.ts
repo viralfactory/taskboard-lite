@@ -87,3 +87,32 @@ export function nextCycleDates(start: string, due: string, today = todayStr()) {
   const span = Math.max(0, diffDays(start, due))
   return { start: today, due: addDays(today, span) }
 }
+
+// ─────────────────────────────── v2: 월 단위
+
+/** 'YYYY-MM' */
+export function yearMonth(base = todayStr()): string {
+  return base.slice(0, 7)
+}
+
+export function monthRange(ym: string): { start: string; end: string } {
+  const [y, m] = ym.split('-').map(Number)
+  return { start: `${ym}-01`, end: fmt(new Date(y, m, 0)) }
+}
+
+export function addMonths(ym: string, n: number): string {
+  const [y, m] = ym.split('-').map(Number)
+  const d = new Date(y, m - 1 + n, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/** 최근 n개월 (ym 포함, 오래된 것부터) */
+export function recentMonths(ym: string, n: number): string[] {
+  return Array.from({ length: n }, (_, i) => addMonths(ym, i - (n - 1)))
+}
+
+/** 'M/D' — 보고서 일정 표기용 */
+export function mdOf(date: string): string {
+  const [, m, d] = date.split('-')
+  return `${Number(m)}/${Number(d)}`
+}

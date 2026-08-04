@@ -32,6 +32,11 @@ export interface Task {
   created_at: string
   checkpoints: Checkpoint[]
   issues?: Issue[]
+  // v2
+  progress_note: string | null
+  stage: string
+  initial_due_date: string | null
+  is_agenda: boolean
 }
 
 export interface Issue {
@@ -43,6 +48,58 @@ export interface Issue {
   status: 'new' | 'working' | 'resolved'
   created_at: string
   resolved_at: string | null
+  // v2
+  title: string | null
+  needs_decision: boolean
+  sort_order: number
+}
+
+// ─────────────────────────────── v2
+
+export interface Incident {
+  id: number
+  occurred_at: string
+  title: string
+  system: string
+  severity: 'critical' | 'major' | 'normal'
+  cause_type: string | null
+  action: string | null
+  status: 'responding' | 'resolved'
+  recurrence_action: string | null
+  related_task_id: number | null
+  reporter_id: string | null
+  resolved_at: string | null
+  created_at: string
+}
+
+export interface NewIncidentInput {
+  occurred_at: string
+  title: string
+  system: string
+  severity: Incident['severity']
+  cause_type?: string | null
+  action?: string | null
+  recurrence_action?: string | null
+  reporter_id: string
+}
+
+export interface MonthlyReport {
+  id: number
+  year_month: string
+  org_name: string | null
+  author_name: string | null
+  report_date: string | null
+  highlight: string | null
+  footnote: string | null
+  base_date: string | null
+  confirmed_at: string | null
+}
+
+export interface NextMonthPlan {
+  id: number
+  year_month: string
+  content: string
+  sort_order: number
 }
 
 export interface WeeklyReport {
@@ -64,4 +121,6 @@ export interface NewTaskInput {
   due_date: string
   deliverable: string
   checkpoints: string[]
+  stage: string
+  is_agenda: boolean
 }

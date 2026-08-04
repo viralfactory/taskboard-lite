@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { listAllWeeklyReports, listIssues } from '../lib/api'
+import { listAllWeeklyReports, listIncidents, listIssues } from '../lib/api'
 import { buildWorkbook, downloadBlob, filterTasks, type ReportFilter } from '../lib/excel'
 import { addWeeks, isoWeek, weekRange, todayStr, parseDate, fmt } from '../lib/dates'
 import { progressOf, SIGNAL_EMOJI } from '../lib/progress'
@@ -21,6 +21,7 @@ export default function Report() {
   const { data: profiles = [] } = useProfiles()
   const { data: issues = [] } = useQuery({ queryKey: ['issues'], queryFn: listIssues })
   const { data: reports = [] } = useQuery({ queryKey: ['weeklyAll'], queryFn: listAllWeeklyReports })
+  const { data: incidents = [] } = useQuery({ queryKey: ['incidents'], queryFn: listIncidents })
   const names = nameMap(profiles)
 
   const [period, setPeriod] = useState<Period>('week')
@@ -62,7 +63,7 @@ export default function Report() {
   async function download() {
     setBusy(true)
     try {
-      const blob = await buildWorkbook({ tasks, issues, profiles, reports, weeks, filter })
+      const blob = await buildWorkbook({ tasks, issues, profiles, reports, incidents, weeks, filter })
       downloadBlob(blob, filename)
     } finally {
       setBusy(false)
@@ -140,7 +141,7 @@ export default function Report() {
 
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm text-slate-500">
-          미리보기 <b>{preview.length}</b>건 · 시트 4개 (업무현황 / 주간보고 / 이슈 / 요약)
+          미리보기 <b>{preview.length}</b>건 · 시트 5개 (업무현황 / 주간보고 / 이슈 / 요약 / 장애)
         </p>
         <button
           onClick={() => void download()}

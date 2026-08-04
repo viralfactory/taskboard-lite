@@ -1,6 +1,16 @@
 // 모든 DB 접근은 여기를 지난다. 컴포넌트는 supabase 클라이언트를 직접 import 하지 않는다.
 import { supabase } from './supabase'
-import type { Issue, NewTaskInput, Profile, Task, WeeklyReport } from './types'
+import type {
+  Incident,
+  Issue,
+  MonthlyReport,
+  NewIncidentInput,
+  NewTaskInput,
+  NextMonthPlan,
+  Profile,
+  Task,
+  WeeklyReport,
+} from './types'
 
 function unwrap<T>({ data, error }: { data: T | null; error: { message: string } | null }): T {
   if (error) throw new Error(error.message)
@@ -73,7 +83,9 @@ export async function listTasks(): Promise<Task[]> {
 /** 등록 폼 저장. 체크포인트까지 함께 만들고 profiles.last_cat_* 을 갱신한다. */
 export async function createTask(input: NewTaskInput, currentUserId: string): Promise<Task> {
   const { checkpoints, ...taskFields } = input
-  const task = unwrap<Task>(await supabase.from('tasks').insert(taskFields).select().single())
+  // initial_due_date 는 사용자가 수정할 수 없다. 최초 저장 시 자동 설정.
+  const row = { ...taskFields, initial_due_date: input.due_date }
+  const task = unwrap<Task>(await supabase.from('tasks').insert(row).select().single())
 
   if (checkpoints.length) {
     const rows = checkpoints.map((name, i) => ({ task_id: task.id, name, sort_order: i }))
@@ -85,12 +97,14 @@ export async function createTask(input: NewTaskInput, currentUserId: string): Pr
 }
 
 export async function updateTask(id: number, patch: Partial<Task>) {
-  const { checkpoints, issues, ...fields } = patch as Record<string, unknown> & {
+  const { checkpoints, issues, initial_due_date, ...fields } = patch as Record<string, unknown> & {
     checkpoints?: unknown
     issues?: unknown
+    initial_due_date?: unknown
   }
   void checkpoints
   void issues
+  void initial_due_date // 최초 마감일은 수정 대상이 아니다
   const { error } = await supabase.from('tasks').update(fields).eq('id', id)
   if (error) throw new Error(error.message)
 }
@@ -141,9 +155,11 @@ export async function deleteCheckpoint(id: number) {
 
 export async function createIssue(input: {
   task_id: number
+  title: string
   content: string
   type: string
   impact_days: number
+  needs_decision: boolean
 }) {
   const { error } = await supabase.from('issues').insert(input)
   if (error) throw new Error(error.message)
@@ -185,5 +201,89 @@ export async function saveWeeklyReport(input: {
     submitted_at: input.submit ? new Date().toISOString() : null,
   }
   const { error } = await supabase.from('weekly_reports').upsert(row, { onConflict: 'user_id,year_week' })
+  if (error) throw new Error(error.message)
+}
+
+// ═══════════════════════════════════════════ v2
+
+// ─────────────────────────────────────────── incidents
+
+export async function listIncidents(): Promise<Incident[]> {
+  return unwrap(
+    await supabase.from('incidents').select('*').order('occurred_at', { ascending: false }),
+  )
+}
+
+export async function createIncident(input: NewIncidentInput) {
+  const { error } = await supabase.from('incidents').insert(input)
+  if (error) throw new Error(error.message)
+}
+
+export async function updateIncident(id: number, patch: Partial<Incident>) {
+  const next = { ...patch }
+  if (patch.status === 'resolved' && !patch.resolved_at) next.resolved_at = new Date().toISOString()
+  if (patch.status === 'responding') next.resolved_at = null
+  const { error } = await supabase.from('incidents').update(next).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteIncident(id: number) {
+  const { error } = await supabase.from('incidents').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ─────────────────────────────────────────── monthly report
+
+export async function getMonthlyReport(yearMonth: string): Promise<MonthlyReport | null> {
+  const { data, error } = await supabase
+    .from('monthly_reports')
+    .select('*')
+    .eq('year_month', yearMonth)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function saveMonthlyReport(input: {
+  year_month: string
+  org_name: string
+  author_name: string
+  report_date: string | null
+  highlight: string
+  base_date: string | null
+  confirm?: boolean
+}) {
+  const row = {
+    year_month: input.year_month,
+    org_name: input.org_name,
+    author_name: input.author_name,
+    report_date: input.report_date || null,
+    highlight: input.highlight,
+    base_date: input.base_date || null,
+    ...(input.confirm ? { confirmed_at: new Date().toISOString() } : {}),
+  }
+  const { error } = await supabase
+    .from('monthly_reports')
+    .upsert(row, { onConflict: 'year_month' })
+  if (error) throw new Error(error.message)
+}
+
+// ─────────────────────────────────────────── next month plans
+
+export async function listNextMonthPlans(yearMonth: string): Promise<NextMonthPlan[]> {
+  return unwrap(
+    await supabase.from('next_month_plans').select('*').eq('year_month', yearMonth).order('sort_order'),
+  )
+}
+
+export async function addNextMonthPlan(yearMonth: string, content: string, sortOrder: number) {
+  const { error } = await supabase
+    .from('next_month_plans')
+    .insert({ year_month: yearMonth, content, sort_order: sortOrder })
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteNextMonthPlan(id: number) {
+  const { error } = await supabase.from('next_month_plans').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }

@@ -8,7 +8,8 @@ import type ExcelJS from 'exceljs'
 import { diffDays, todayStr } from './dates'
 import { progressOf, SIGNAL_EMOJI, type Signal } from './progress'
 import { buildDigest, doneDateOf } from './weekly'
-import type { Issue, Profile, Task, WeeklyReport } from './types'
+import { INCIDENT_STATUS, SEVERITY } from './constants'
+import type { Incident, Issue, Profile, Task, WeeklyReport } from './types'
 
 const FILL: Record<Signal, string> = {
   green: 'FFC6EFCE',
@@ -31,6 +32,8 @@ interface BuildArgs {
   weeks: string[]
   filter: ReportFilter
   today?: string
+  /** v2 — 시트 5 「장애」. 기간(from~to) 내 발생 건만 싣는다. */
+  incidents?: Incident[]
 }
 
 /** 기간·담당자·신호 조건을 적용한 업무 목록 */
@@ -176,6 +179,39 @@ export async function buildWorkbook(args: BuildArgs): Promise<Blob> {
       c.border = { top: { style: 'thin', color: { argb: 'FF94A3B8' } } }
     })
     styleHeader(ws, [12, 8, 8, 8, 8, 10, 12, 14])
+  }
+
+  // ── 시트 5: 장애 (v2, SPEC-V2 7.8)
+  {
+    const list = (args.incidents ?? []).filter(
+      (i) => i.occurred_at >= args.filter.from && i.occurred_at <= args.filter.to,
+    )
+    const ws = wb.addWorksheet('장애')
+    ws.addRow([
+      '발생일', '제목', '시스템', '등급', '원인유형', '조치 내용', '상태', '재발방지 대책', '경과일',
+    ])
+    for (const i of list) {
+      const until = i.resolved_at ? i.resolved_at.slice(0, 10) : today
+      const r = ws.addRow([
+        i.occurred_at,
+        i.title,
+        i.system,
+        SEVERITY[i.severity]?.label ?? i.severity,
+        i.cause_type ?? '',
+        i.action ?? '',
+        INCIDENT_STATUS[i.status] ?? i.status,
+        i.recurrence_action ?? '',
+        diffDays(i.occurred_at, until),
+      ])
+      const bg = { critical: 'FFFDECEC', major: 'FFFDF6E3', normal: 'FFE4F5EE' }[i.severity]
+      if (bg) {
+        r.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } }
+        r.getCell(4).alignment = { horizontal: 'center' }
+      }
+      r.getCell(1).alignment = { horizontal: 'center' }
+      ;[6, 8].forEach((c) => (r.getCell(c).alignment = { wrapText: true, vertical: 'top' }))
+    }
+    styleHeader(ws, [12, 40, 10, 10, 12, 34, 10, 34, 8])
   }
 
   const buf = await wb.xlsx.writeBuffer()
