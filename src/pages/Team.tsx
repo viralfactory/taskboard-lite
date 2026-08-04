@@ -103,6 +103,10 @@ export default function Team() {
         </label>
       </div>
 
+      {formSeed && (
+        <TaskForm key={formSeed.name} seed={formSeed} onClose={() => setFormSeed(null)} />
+      )}
+
       {isLoading ? (
         <p className="text-sm text-slate-400">불러오는 중…</p>
       ) : rows.length === 0 ? (
@@ -113,10 +117,6 @@ export default function Team() {
             <TaskRow key={t.id} task={t} assigneeName={names[t.assignee_id]} onDuplicate={duplicate} />
           ))}
         </div>
-      )}
-
-      {formSeed && (
-        <TaskForm key={formSeed.name} seed={formSeed} onClose={() => setFormSeed(null)} />
       )}
     </div>
   )

@@ -1,7 +1,8 @@
 // v2 상수 (SPEC-V2 3.3). 장애 등급 판정 기준은 여기에 고정한다 —
 // 화면에서 임의 등급을 추가하지 않는다. 등급이 사람마다 달라지면 월별 추이가 의미를 잃는다.
 
-export const SYSTEMS = ['WEB', 'POVAS', '공통'] as const
+/** 기본 시스템. 팀이 운영하며 늘리는 항목은 custom_options(kind='system') 에 쌓인다. */
+export const SYSTEMS = ['WEB', 'POVAS', 'BRS', 'Workspace', '공통'] as const
 export type SystemName = (typeof SYSTEMS)[number]
 
 export type Severity = 'critical' | 'major' | 'normal'

@@ -1,6 +1,7 @@
 // 모든 DB 접근은 여기를 지난다. 컴포넌트는 supabase 클라이언트를 직접 import 하지 않는다.
 import { supabase } from './supabase'
 import type {
+  CustomOption,
   Incident,
   Issue,
   MonthlyReport,
@@ -229,6 +230,32 @@ export async function updateIncident(id: number, patch: Partial<Incident>) {
 
 export async function deleteIncident(id: number) {
   const { error } = await supabase.from('incidents').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+// ─────────────────────────────────────────── custom_options (사용자가 늘리는 목록)
+
+export async function listCustomOptions(): Promise<CustomOption[]> {
+  return unwrap(await supabase.from('custom_options').select('*').order('created_at'))
+}
+
+export async function createCustomOption(input: {
+  kind: CustomOption['kind']
+  name: string
+  checkpoints?: string[]
+  created_by: string
+}): Promise<CustomOption> {
+  return unwrap(
+    await supabase
+      .from('custom_options')
+      .insert({ checkpoints: [], ...input })
+      .select()
+      .single(),
+  )
+}
+
+export async function deleteCustomOption(id: number) {
+  const { error } = await supabase.from('custom_options').delete().eq('id', id)
   if (error) throw new Error(error.message)
 }
 

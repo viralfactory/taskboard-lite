@@ -14,6 +14,7 @@ import {
 import { addMonths, diffDays, monthRange, recentMonths, todayStr, yearMonth } from '../lib/dates'
 import { diffText } from '../lib/monthly'
 import IncidentForm from '../components/IncidentForm'
+import { useCustomOptions } from '../hooks/useCustomOptions'
 import type { Incident } from '../lib/types'
 
 export default function Incidents() {
@@ -28,6 +29,8 @@ export default function Incidents() {
   const [sev, setSev] = useState<'all' | Severity>('all')
   const [status, setStatus] = useState('all')
   const [formOpen, setFormOpen] = useState(false)
+  const { items: customSystems } = useCustomOptions('system')
+  const allSystems = [...SYSTEMS, ...customSystems.map((o) => o.name)]
 
   // I 키로 장애 등록 (업무 등록의 N 과 같은 방식)
   useEffect(() => {
@@ -88,8 +91,8 @@ export default function Incidents() {
             </button>
           </div>
         </div>
-        <button onClick={() => setFormOpen(true)} className="btn bg-slate-900 text-white">
-          + 장애 등록 <span className="opacity-50 text-xs">I</span>
+        <button onClick={() => setFormOpen((v) => !v)} className="btn bg-slate-900 text-white">
+          {formOpen ? '등록 폼 닫기' : '+ 장애 등록'} <span className="opacity-50 text-xs">I</span>
         </button>
       </div>
 
@@ -140,7 +143,7 @@ export default function Incidents() {
       <div className="flex flex-wrap gap-2 mb-4">
         <select className="chip border-slate-300 text-xs" value={system} onChange={(e) => setSystem(e.target.value)}>
           <option value="all">시스템 전체</option>
-          {SYSTEMS.map((s) => (
+          {allSystems.map((s) => (
             <option key={s}>{s}</option>
           ))}
         </select>
@@ -160,6 +163,8 @@ export default function Incidents() {
         </select>
       </div>
 
+      {formOpen && <IncidentForm onClose={() => setFormOpen(false)} />}
+
       {isLoading ? (
         <p className="text-sm text-slate-400">불러오는 중…</p>
       ) : rows.length === 0 ? (
@@ -173,8 +178,6 @@ export default function Incidents() {
           ))}
         </div>
       )}
-
-      {formOpen && <IncidentForm onClose={() => setFormOpen(false)} />}
     </div>
   )
 }

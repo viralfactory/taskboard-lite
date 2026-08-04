@@ -95,6 +95,16 @@ export interface MonthlyReport {
   confirmed_at: string | null
 }
 
+/** 팀이 운영하면서 직접 늘리는 목록. 기본값은 코드 상수가 정본이다. */
+export interface CustomOption {
+  id: number
+  kind: 'activity' | 'system'
+  name: string
+  checkpoints: string[]
+  created_by: string | null
+  created_at: string
+}
+
 export interface NextMonthPlan {
   id: number
   year_month: string

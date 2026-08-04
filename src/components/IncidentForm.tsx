@@ -4,18 +4,22 @@ import { createIncident } from '../lib/api'
 import { CAUSE_TYPES, SEVERITY, SEVERITY_CRITERIA, SEVERITY_ORDER, SYSTEMS, type Severity } from '../lib/constants'
 import { addDays, todayStr } from '../lib/dates'
 import { useAuth } from '../hooks/useAuth'
+import { optionErrorText, useCustomOptions } from '../hooks/useCustomOptions'
 
 // ─────────────────────────────────────────────────────────────
 // SPEC-V2 4.1 — 장애 등록 20초.
 // 보이는 입력은 제목·시스템·등급·발생일 4개뿐.
 // 원인유형·조치·재발방지는 접힌 영역이고 미입력 상태로 저장 가능하다.
 // 장애는 발생 직후 경황이 없을 때 기록하므로 업무 등록보다 짧아야 한다.
+// 업무 등록과 마찬가지로 팝업이 아니라 목록 위에 펼쳐지는 섹션이다.
 // ─────────────────────────────────────────────────────────────
 
 export default function IncidentForm({ onClose }: { onClose: () => void }) {
   const { userId } = useAuth()
   const qc = useQueryClient()
   const titleRef = useRef<HTMLInputElement>(null)
+  const rootRef = useRef<HTMLElement>(null)
+  const { items: customSystems, add: addSys, remove: delSys } = useCustomOptions('system')
 
   const [title, setTitle] = useState('')
   const [system, setSystem] = useState<string>(SYSTEMS[0])
@@ -25,12 +29,35 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
   const [action, setAction] = useState('')
   const [recurrence, setRecurrence] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
+  const [sysOpen, setSysOpen] = useState(false)
+  const [newSystem, setNewSystem] = useState('')
   const [err, setErr] = useState('')
   const [flash, setFlash] = useState('')
 
   useEffect(() => {
     titleRef.current?.focus()
+    rootRef.current?.scrollIntoView({ block: 'nearest' })
   }, [])
+
+  // 기본 시스템 + 팀이 추가한 시스템
+  const allSystems: string[] = [...SYSTEMS, ...customSystems.map((o) => o.name)]
+
+  function submitSystem() {
+    const n = newSystem.trim()
+    if (!n) return
+    setErr('')
+    addSys.mutate(
+      { name: n },
+      {
+        onSuccess: (o) => {
+          setNewSystem('')
+          setSystem(o.name)
+          setSysOpen(false)
+        },
+        onError: (e) => setErr(optionErrorText(e)),
+      },
+    )
+  }
 
   const dateChips = [
     { label: `오늘(${md(todayStr())})`, value: todayStr() },
@@ -78,8 +105,9 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
       return
     }
     if (e.key === 'Enter') {
-      const tag = (e.target as HTMLElement).tagName
-      if (tag === 'TEXTAREA' || tag === 'BUTTON') return
+      const el = e.target as HTMLElement
+      if (el.tagName === 'TEXTAREA' || el.tagName === 'BUTTON') return
+      if (el.dataset.noSubmit === 'true') return
       e.preventDefault()
       save.mutate(e.ctrlKey || e.metaKey)
     }
@@ -96,19 +124,16 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div
-      className="fixed inset-0 bg-black/30 z-50 flex items-start justify-center p-4 overflow-y-auto"
-      onMouseDown={onClose}
+    <section
+      ref={rootRef}
+      className="bg-white border border-slate-300 rounded-xl p-5 mb-4 shadow-sm"
+      onKeyDown={onKeyDown}
     >
-      <div
-        className="bg-white rounded-xl w-full max-w-lg mt-8 md:mt-16 p-6"
-        onMouseDown={(e) => e.stopPropagation()}
-        onKeyDown={onKeyDown}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-bold">장애 등록</h2>
-          <button onClick={onClose} className="text-xs text-slate-400">
-            Esc
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-sm">장애 등록</h2>
+          <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-700">
+            닫기 <span className="opacity-60">Esc</span>
           </button>
         </div>
 
@@ -121,19 +146,71 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
         />
 
         <ChipRow label="시스템">
-          <div className="flex flex-wrap gap-1.5" tabIndex={-1} onKeyDown={(e) => chipKeys(e, (i) => setSystem(SYSTEMS[i]), SYSTEMS.length)}>
-            {SYSTEMS.map((s, i) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSystem(s)}
-                className={`chip ${system === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'}`}
-              >
-                <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>
-                {s}
-              </button>
-            ))}
+          <div
+            className="flex flex-wrap gap-1.5 items-center"
+            tabIndex={-1}
+            onKeyDown={(e) => chipKeys(e, (i) => setSystem(allSystems[i]), allSystems.length)}
+          >
+            {allSystems.map((s, i) => {
+              const custom = customSystems.find((o) => o.name === s)
+              return (
+                <span key={s} className="inline-flex items-center group">
+                  <button
+                    type="button"
+                    onClick={() => setSystem(s)}
+                    className={`chip ${system === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'}`}
+                  >
+                    {i < 4 && <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>}
+                    {s}
+                  </button>
+                  {custom && (
+                    <button
+                      type="button"
+                      title="시스템 삭제"
+                      onClick={() => delSys.mutate(custom.id)}
+                      className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 text-xs px-1"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => setSysOpen((v) => !v)}
+              className={`chip text-xs ${sysOpen ? 'border-slate-900' : 'border-slate-300'} hover:bg-slate-50`}
+            >
+              + 시스템
+            </button>
           </div>
+
+          {sysOpen && (
+            <div className="flex gap-1.5 mt-2">
+              <input
+                data-no-submit="true"
+                className="field py-1 text-xs"
+                value={newSystem}
+                onChange={(e) => setNewSystem(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    submitSystem()
+                  }
+                }}
+                placeholder="시스템명 추가 (예: KOSSA) 후 Enter"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={submitSystem}
+                disabled={!newSystem.trim() || addSys.isPending}
+                className="btn border border-slate-300 text-xs shrink-0"
+              >
+                추가
+              </button>
+            </div>
+          )}
         </ChipRow>
 
         <ChipRow label="등급">
@@ -239,7 +316,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 

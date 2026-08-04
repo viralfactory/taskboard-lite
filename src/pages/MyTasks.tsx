@@ -77,11 +77,11 @@ export default function MyTasks() {
         <button
           onClick={() => {
             setFormSeed(null)
-            setFormOpen(true)
+            setFormOpen((v) => !v)
           }}
           className="btn bg-slate-900 text-white"
         >
-          + 새 업무 <span className="opacity-50 text-xs">N</span>
+          {formOpen ? '등록 폼 닫기' : '+ 새 업무'} <span className="opacity-50 text-xs">N</span>
         </button>
       </div>
 
@@ -99,6 +99,14 @@ export default function MyTasks() {
         ))}
       </div>
 
+      {formOpen && (
+        <TaskForm
+          key={formSeed?.name ?? '__new__'}
+          seed={formSeed ?? undefined}
+          onClose={() => setFormOpen(false)}
+        />
+      )}
+
       {isLoading ? (
         <p className="text-sm text-slate-400">불러오는 중…</p>
       ) : shown.length === 0 ? (
@@ -111,14 +119,6 @@ export default function MyTasks() {
             <TaskRow key={t.id} task={t} assigneeName={names[t.assignee_id]} onDuplicate={duplicate} />
           ))}
         </div>
-      )}
-
-      {formOpen && (
-        <TaskForm
-          key={formSeed?.name ?? '__new__'}
-          seed={formSeed ?? undefined}
-          onClose={() => setFormOpen(false)}
-        />
       )}
     </div>
   )
