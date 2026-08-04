@@ -90,6 +90,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
   const [moreOpen, setMoreOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [newActivity, setNewActivity] = useState('')
+  const [addOpen, setAddOpen] = useState(false)
   const [err, setErr] = useState('')
   const [flash, setFlash] = useState('')
 
@@ -122,6 +123,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
         onSuccess: (a: CustomOption) => {
           // 방금 만든 활동을 바로 선택 상태로
           setNewActivity('')
+          setAddOpen(false)
           const cps = a.checkpoints?.length ? a.checkpoints : [...DEFAULT_ACTIVITY_CHECKPOINTS]
           setCat({ l1: CUSTOM_L1, l2: a.name })
           setCheckpoints(cps)
@@ -214,12 +216,12 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
   return (
     <section
       ref={rootRef}
-      className="bg-white border border-slate-300 rounded-xl p-5 mb-4 shadow-sm"
+      className="bg-surface-lowest border border-outline rounded-md p-5 mb-4 shadow-sm"
       onKeyDown={onKeyDown}
     >
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-bold text-sm">새 업무</h2>
-        <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-700">
+        <button onClick={onClose} className="text-xs text-on-surface-variant hover:text-on-surface">
           닫기 <span className="opacity-60">Esc</span>
         </button>
       </div>
@@ -238,7 +240,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
 
           {/* 2. 카테고리 */}
           <div className="mb-4">
-            <div className="text-xs text-slate-500 mb-1.5">카테고리</div>
+            <div className="text-xs text-on-surface-variant mb-1.5">카테고리</div>
             <div
               className="flex flex-wrap gap-1.5"
               tabIndex={-1}
@@ -251,7 +253,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                     key={`${p.l1}>${p.l2}`}
                     type="button"
                     onClick={() => pickCat(p)}
-                    className={`chip ${on ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'}`}
+                    className={`chip ${on ? 'chip-on' : 'border-outline hover:bg-surface-low'}`}
                   >
                     <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>
                     {p.l1}&gt;{p.l2}
@@ -261,24 +263,24 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
               <button
                 type="button"
                 onClick={() => setPickerOpen((v) => !v)}
-                className={`chip ${pickerOpen ? 'border-slate-900' : 'border-slate-300'} hover:bg-slate-50`}
+                className={`chip ${pickerOpen ? 'border-primary' : 'border-outline'} hover:bg-surface-low`}
               >
                 전체 {pickerOpen ? '▴' : '▾'}
               </button>
             </div>
 
             {!recents.some((p) => p.l1 === cat.l1 && p.l2 === cat.l2) && (
-              <div className="text-xs text-slate-500 mt-1.5">
+              <div className="text-xs text-on-surface-variant mt-1.5">
                 선택됨 · <b>{cat.l1}&gt;{cat.l2}</b>
               </div>
             )}
 
             {/* 최근 3개에 없는 조합은 여기서 고른다 */}
             {pickerOpen && (
-              <div className="mt-2 border border-slate-200 rounded-lg p-3 max-h-72 overflow-y-auto">
+              <div className="mt-2 border border-outline-variant rounded-md p-3 max-h-72 overflow-y-auto">
                 {L1_LIST.map((l1) => (
                   <div key={l1} className="mb-3 last:mb-0">
-                    <div className="text-[11px] text-slate-400 mb-1">{l1}</div>
+                    <div className="text-[11px] text-on-surface-variant mb-1">{l1}</div>
                     <div className="flex flex-wrap gap-1.5">
                       {l2sOf(l1).map((l2) => {
                         const custom = l1 === CUSTOM_L1 ? activities.find((a) => a.name === l2) : undefined
@@ -289,8 +291,8 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                               onClick={() => pickCat({ l1, l2 })}
                               className={`chip text-xs ${
                                 cat.l1 === l1 && cat.l2 === l2
-                                  ? 'bg-slate-900 text-white border-slate-900'
-                                  : 'border-slate-200 hover:bg-slate-100'
+                                  ? 'chip-on'
+                                  : 'border-outline-variant hover:bg-surface-high'
                               }`}
                             >
                               {l2}
@@ -300,7 +302,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                                 type="button"
                                 title="활동 삭제"
                                 onClick={() => delAct.mutate(custom.id)}
-                                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 text-xs px-1"
+                                className="opacity-0 group-hover:opacity-100 text-on-surface-variant/60 hover:text-error text-xs px-1"
                               >
                                 ✕
                               </button>
@@ -311,7 +313,17 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                     </div>
 
                     {/* 이 대분류에서만 활동명을 팀이 직접 늘린다 */}
-                    {l1 === CUSTOM_L1 && (
+                    {l1 === CUSTOM_L1 && !addOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setAddOpen(true)}
+                        className="chip mt-2 text-primary border-primary/50"
+                        title="활동 추가"
+                      >
+                        + 활동 추가
+                      </button>
+                    )}
+                    {l1 === CUSTOM_L1 && addOpen && (
                       <div className="flex gap-1.5 mt-2">
                         <input
                           data-no-submit="true"
@@ -324,15 +336,26 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                               submitActivity()
                             }
                           }}
-                          placeholder="활동명 추가 (예: 사내 세미나) 후 Enter"
+                          placeholder="활동명 (예: 사내 세미나) 후 Enter"
+                          autoFocus
                         />
                         <button
                           type="button"
                           onClick={submitActivity}
                           disabled={!newActivity.trim() || addAct.isPending}
-                          className="btn border border-slate-300 text-xs shrink-0"
+                          className="btn-filled text-xs shrink-0"
                         >
                           추가
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddOpen(false)
+                            setNewActivity('')
+                          }}
+                          className="btn text-xs shrink-0"
+                        >
+                          취소
                         </button>
                       </div>
                     )}
@@ -344,7 +367,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
 
           {/* 3. 마감일 */}
           <div className="mb-4">
-            <div className="text-xs text-slate-500 mb-1.5">마감일</div>
+            <div className="text-xs text-on-surface-variant mb-1.5">마감일</div>
             <div
               className="flex flex-wrap gap-1.5 items-center"
               tabIndex={-1}
@@ -359,8 +382,8 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                   onClick={() => pickDue(c.mode, c.resolved)}
                   className={`chip ${
                     dueMode === c.mode
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'border-slate-300 hover:bg-slate-50'
+                      ? 'chip-on'
+                      : 'border-outline hover:bg-surface-low'
                   }`}
                 >
                   <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>
@@ -374,14 +397,14 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                   setDueMode('custom')
                   setDueDate(e.target.value)
                 }}
-                className={`chip ${dueMode === 'custom' ? 'border-slate-900' : 'border-slate-300'} text-xs`}
+                className={`chip ${dueMode === 'custom' ? 'border-primary' : 'border-outline'} text-xs`}
               />
             </div>
           </div>
 
           {/* 4. 단계 */}
           <div className="mb-4 lg:mb-0">
-            <div className="text-xs text-slate-500 mb-1.5">단계</div>
+            <div className="text-xs text-on-surface-variant mb-1.5">단계</div>
             <div
               className="flex flex-wrap gap-1.5"
               tabIndex={-1}
@@ -393,7 +416,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                   type="button"
                   onClick={() => setStage(s)}
                   className={`chip ${
-                    stage === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'
+                    stage === s ? 'chip-on' : 'border-outline hover:bg-surface-low'
                   }`}
                 >
                   <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>
@@ -405,16 +428,16 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
         </div>
 
         {/* ── 오른쪽 단 */}
-        <div className="lg:border-l lg:border-slate-100 lg:pl-8">
+        <div className="lg:border-l lg:border-outline-variant lg:pl-8">
           {/* 5. 체크포인트 (템플릿 자동 생성) */}
           <div className="mb-4">
-            <div className="text-xs text-slate-500 mb-1.5">
-              체크포인트 (자동) <span className="text-slate-300">· 2개 이상</span>
+            <div className="text-xs text-on-surface-variant mb-1.5">
+              체크포인트 (자동) <span className="text-on-surface-variant/60">· 2개 이상</span>
             </div>
             <div className="space-y-1.5">
               {checkpoints.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-slate-300">☐</span>
+                  <span className="text-on-surface-variant/60">☐</span>
                   <input
                     className="field py-1 text-sm"
                     value={c}
@@ -425,7 +448,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                   <button
                     type="button"
                     onClick={() => setCheckpoints((cs) => cs.filter((_, j) => j !== i))}
-                    className="text-slate-300 hover:text-red-500 px-1"
+                    className="text-on-surface-variant/60 hover:text-error px-1"
                     tabIndex={-1}
                   >
                     ✕
@@ -436,7 +459,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
             <button
               type="button"
               onClick={() => setCheckpoints((cs) => [...cs, ''])}
-              className="btn text-slate-400 mt-1 px-0"
+              className="btn text-on-surface-variant mt-1 px-0"
               tabIndex={-1}
             >
               + 추가
@@ -447,7 +470,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
           <button
             type="button"
             onClick={() => setMoreOpen((v) => !v)}
-            className="text-xs text-slate-400 mb-3"
+            className="text-xs text-on-surface-variant mb-3"
             tabIndex={-1}
           >
             {moreOpen ? '▾' : '▸'} 담당자·시작일·산출물·월간보고 포함 변경
@@ -456,7 +479,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
           {moreOpen && (
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
-                <div className="text-xs text-slate-500 mb-1">담당자</div>
+                <div className="text-xs text-on-surface-variant mb-1">담당자</div>
                 <select className="field" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
                   {profiles.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -466,7 +489,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                 </select>
               </div>
               <div>
-                <div className="text-xs text-slate-500 mb-1">시작일</div>
+                <div className="text-xs text-on-surface-variant mb-1">시작일</div>
                 <input
                   type="date"
                   className="field"
@@ -475,7 +498,7 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                 />
               </div>
               <div className="col-span-2">
-                <div className="text-xs text-slate-500 mb-1">산출물</div>
+                <div className="text-xs text-on-surface-variant mb-1">산출물</div>
                 <input className="field" value={deliverable} onChange={(e) => setDeliverable(e.target.value)} />
               </div>
               <label className="col-span-2 flex items-center gap-2 text-sm cursor-pointer">
@@ -483,33 +506,33 @@ export default function TaskForm({ seed, onClose }: { seed?: TaskFormSeed; onClo
                   type="checkbox"
                   checked={isAgenda}
                   onChange={(e) => setIsAgenda(e.target.checked)}
-                  className="accent-slate-900"
+                  className=""
                 />
                 월간보고 &apos;개발 안건&apos;에 포함
-                <span className="text-xs text-slate-400">(상시 반복 업무면 해제)</span>
+                <span className="text-xs text-on-surface-variant">(상시 반복 업무면 해제)</span>
               </label>
             </div>
           )}
         </div>
       </div>
 
-      {err && <p className="text-sm text-red-600 mt-3">{err}</p>}
-      {flash && <p className="text-sm text-emerald-600 mt-3">{flash}</p>}
+      {err && <p className="text-sm text-error mt-3">{err}</p>}
+      {flash && <p className="text-sm text-signal-green mt-3">{flash}</p>}
 
-      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100">
+      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-outline-variant">
         <button
           type="button"
           onClick={() => save.mutate(true)}
           disabled={save.isPending}
-          className="btn border border-slate-300"
+          className="btn-outlined"
         >
-          저장 후 계속 <span className="text-slate-400 text-xs">⌃⏎</span>
+          저장 후 계속 <span className="text-on-surface-variant text-xs">⌃⏎</span>
         </button>
         <button
           type="button"
           onClick={() => save.mutate(false)}
           disabled={save.isPending}
-          className="btn bg-slate-900 text-white"
+          className="btn-filled"
         >
           저장 <span className="opacity-60 text-xs">⏎</span>
         </button>

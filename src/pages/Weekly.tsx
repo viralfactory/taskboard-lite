@@ -64,14 +64,14 @@ export default function Weekly() {
       <div className="flex items-center gap-3 mb-5">
         <h1 className="text-lg font-bold">주간보고</h1>
         <div className="flex items-center gap-1 text-sm">
-          <button onClick={() => setWeek(addWeeks(week, -1))} className="btn text-slate-400">
+          <button onClick={() => setWeek(addWeeks(week, -1))} className="btn text-on-surface-variant">
             ‹
           </button>
           <span className="font-medium">{week}</span>
-          <button onClick={() => setWeek(addWeeks(week, 1))} className="btn text-slate-400">
+          <button onClick={() => setWeek(addWeeks(week, 1))} className="btn text-on-surface-variant">
             ›
           </button>
-          <span className="text-xs text-slate-400 ml-1">
+          <span className="text-xs text-on-surface-variant ml-1">
             {start} ~ {end}
           </span>
         </div>
@@ -83,7 +83,7 @@ export default function Weekly() {
             key={t}
             onClick={() => setTab(t)}
             className={`chip text-xs ${
-              tab === t ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'
+              tab === t ? 'chip-on' : 'border-outline'
             }`}
           >
             {t === 'mine' ? '내 보고' : '팀 통합본'}
@@ -102,9 +102,9 @@ export default function Weekly() {
             {openIssues.length > 0 && (
               <ul className="text-sm space-y-1 mb-2">
                 {openIssues.map(({ t, i }) => (
-                  <li key={i.id} className="text-slate-600">
+                  <li key={i.id} className="text-on-surface">
                     • [{i.type}] {i.content}{' '}
-                    <span className="text-slate-400">
+                    <span className="text-on-surface-variant">
                       ({t.name}
                       {i.impact_days > 0 ? ` · ${i.impact_days}일 영향` : ''})
                     </span>
@@ -132,15 +132,15 @@ export default function Weekly() {
             <button
               onClick={() => save.mutate(true)}
               disabled={save.isPending}
-              className="btn bg-slate-900 text-white"
+              className="btn-filled"
             >
               제출
             </button>
-            <button onClick={() => save.mutate(false)} className="btn border border-slate-300">
+            <button onClick={() => save.mutate(false)} className="btn-outlined">
               임시 저장
             </button>
             {mineReport?.submitted_at && (
-              <span className="text-xs text-emerald-600">
+              <span className="text-xs text-signal-green">
                 제출됨 · {mineReport.submitted_at.slice(0, 16).replace('T', ' ')}
               </span>
             )}
@@ -153,17 +153,17 @@ export default function Weekly() {
             const r = reports.find((x) => x.user_id === p.id)
             const empty = !d.done.length && !d.doing.length && !d.next.length && !r
             return (
-              <div key={p.id} className="bg-white border border-slate-200 rounded-lg p-4">
+              <div key={p.id} className="bg-surface-lowest border border-outline-variant rounded-md p-4">
                 <div className="flex items-baseline gap-2 mb-3">
                   <span className="font-semibold text-sm">{p.name}</span>
-                  <span className="text-xs text-slate-400">{p.part}</span>
+                  <span className="text-xs text-on-surface-variant">{p.part}</span>
                   <span className="flex-1" />
-                  <span className={`text-xs ${r?.submitted_at ? 'text-emerald-600' : 'text-slate-300'}`}>
+                  <span className={`text-xs ${r?.submitted_at ? 'text-signal-green' : 'text-on-surface-variant/60'}`}>
                     {r?.submitted_at ? '제출' : '미제출'}
                   </span>
                 </div>
                 {empty ? (
-                  <p className="text-xs text-slate-300">기록 없음</p>
+                  <p className="text-xs text-on-surface-variant/60">기록 없음</p>
                 ) : (
                   <div className="text-sm space-y-2">
                     <Line label="완료" items={d.done.map((t) => `${t.name} (${t.deliverable})`)} />
@@ -179,7 +179,7 @@ export default function Weekly() {
               </div>
             )
           })}
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-on-surface-variant">
             담당자 이름은 프로필 기준입니다. ({Object.keys(names).length}명)
           </p>
         </div>
@@ -205,13 +205,13 @@ function ProgressNotes({ tasks }: { tasks: Task[] }) {
 
   return (
     <Section title="주요 진행 내용 (월간보고용)" human>
-      <p className="text-xs text-slate-400 mb-3">
+      <p className="text-xs text-on-surface-variant mb-3">
         결과 중심으로 2줄 이내. 월간보고 「1. 개발 안건별 진행 현황」 표에 그대로 들어갑니다.
       </p>
       <div className="space-y-2">
         {agenda.map((t) => (
           <div key={t.id}>
-            <div className="text-xs text-slate-500 mb-1 truncate">{t.name}</div>
+            <div className="text-xs text-on-surface-variant mb-1 truncate">{t.name}</div>
             <textarea
               className="field h-14 resize-none text-sm"
               defaultValue={t.progress_note ?? ''}
@@ -233,8 +233,8 @@ function Line({ label, items }: { label: string; items: string[] }) {
   if (!items.length) return null
   return (
     <div className="flex gap-2">
-      <span className="text-xs text-slate-400 w-10 shrink-0 pt-0.5">{label}</span>
-      <span className="text-slate-700">{items.join(' / ')}</span>
+      <span className="text-xs text-on-surface-variant w-10 shrink-0 pt-0.5">{label}</span>
+      <span className="text-on-surface">{items.join(' / ')}</span>
     </div>
   )
 }
@@ -249,12 +249,12 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-4">
+    <div className="bg-surface-lowest border border-outline-variant rounded-md p-4">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-sm font-semibold">{title}</h2>
         <span
           className={`text-[10px] px-1.5 py-0.5 rounded ${
-            human ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-400'
+            human ? 'bg-signal-yellow-c text-signal-yellow' : 'bg-surface-high text-on-surface-variant'
           }`}
         >
           {human ? '직접 작성' : '자동'}
@@ -273,7 +273,7 @@ function AutoSections({ digest }: { digest: WeeklyDigest }) {
       </Section>
       <Section title="2. 진행 중 업무">
         {digest.doing.length === 0 ? (
-          <p className="text-sm text-slate-300">없음</p>
+          <p className="text-sm text-on-surface-variant/60">없음</p>
         ) : (
           <ul className="space-y-1.5">
             {digest.doing.map((t) => {
@@ -281,7 +281,7 @@ function AutoSections({ digest }: { digest: WeeklyDigest }) {
               return (
                 <li key={t.id} className="flex items-center gap-2 text-sm">
                   <span className="flex-1 truncate">{t.name}</span>
-                  <span className="text-slate-400 text-xs">
+                  <span className="text-on-surface-variant text-xs">
                     {p.actualPct}% / 계획 {p.planPct}%
                   </span>
                   <SignalBadge signal={p.signal} />
@@ -299,7 +299,7 @@ function AutoSections({ digest }: { digest: WeeklyDigest }) {
 }
 
 function TaskLines({ tasks, render }: { tasks: Task[]; render: (t: Task) => string }) {
-  if (!tasks.length) return <p className="text-sm text-slate-300">없음</p>
+  if (!tasks.length) return <p className="text-sm text-on-surface-variant/60">없음</p>
   return (
     <ul className="space-y-1 text-sm">
       {tasks.map((t) => (

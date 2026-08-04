@@ -47,19 +47,19 @@ export default function Daily() {
       <div className="flex flex-wrap items-center gap-3 mb-5">
         <h1 className="text-lg font-bold">데일리 스크럼</h1>
         <div className="flex items-center gap-1 text-sm">
-          <button onClick={() => setDate(prevWorkday(date))} className="btn text-slate-400">‹</button>
+          <button onClick={() => setDate(prevWorkday(date))} className="btn text-on-surface-variant">‹</button>
           <span className="font-medium">
             {date} ({dowOf(date)})
           </span>
-          <button onClick={() => setDate(nextWorkday(date))} className="btn text-slate-400">›</button>
+          <button onClick={() => setDate(nextWorkday(date))} className="btn text-on-surface-variant">›</button>
           {date !== lastWorkday() && (
-            <button onClick={() => setDate(lastWorkday())} className="btn text-xs text-slate-400">
+            <button onClick={() => setDate(lastWorkday())} className="btn text-xs text-on-surface-variant">
               오늘
             </button>
           )}
         </div>
-        {!isWorkday(date) && <span className="text-xs text-amber-600">주말입니다</span>}
-        {date < todayStr() && <span className="text-xs text-slate-400">지난 날짜 — 수정하면 이력이 남습니다</span>}
+        {!isWorkday(date) && <span className="text-xs text-signal-yellow">주말입니다</span>}
+        {date < todayStr() && <span className="text-xs text-on-surface-variant">지난 날짜 — 수정하면 이력이 남습니다</span>}
       </div>
 
       <div className="flex gap-1.5 mb-5">
@@ -67,7 +67,7 @@ export default function Daily() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`chip text-xs ${tab === t ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'}`}
+            className={`chip text-xs ${tab === t ? 'chip-on' : 'border-outline'}`}
           >
             {t === 'mine' ? '내 일지' : `팀 전체 ${reports.filter((r) => members.some((m) => m.id === r.user_id)).length}/${members.length}`}
           </button>
@@ -76,14 +76,14 @@ export default function Daily() {
 
       {tab === 'mine' ? (
         isLoading ? (
-          <p className="text-sm text-slate-400">불러오는 중…</p>
+          <p className="text-sm text-on-surface-variant">불러오는 중…</p>
         ) : !mine ? (
-          <div className="border border-dashed border-slate-200 rounded-lg p-10 text-center">
-            <p className="text-sm text-slate-500 mb-1">{date} 일지가 아직 없습니다.</p>
-            <p className="text-xs text-slate-400 mb-4">
+          <div className="border border-dashed border-outline-variant rounded-md p-10 text-center">
+            <p className="text-sm text-on-surface-variant mb-1">{date} 일지가 아직 없습니다.</p>
+            <p className="text-xs text-on-surface-variant mb-4">
               생성하면 이 날짜에 기간이 걸친 내 업무의 체크포인트를 가져옵니다.
             </p>
-            <button onClick={() => create.mutate()} disabled={create.isPending} className="btn bg-slate-900 text-white">
+            <button onClick={() => create.mutate()} disabled={create.isPending} className="btn-filled">
               {create.isPending ? '생성 중…' : '일지 생성'}
             </button>
           </div>
@@ -170,15 +170,15 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
 
   return (
     <div className="space-y-4">
-      <label className="flex items-center gap-2 text-sm bg-white border border-slate-200 rounded-lg px-4 py-2.5 cursor-pointer">
+      <label className="flex items-center gap-2 text-sm bg-surface-lowest border border-outline-variant rounded-md px-4 py-2.5 cursor-pointer">
         <input
           type="checkbox"
           checked={report.is_leave}
           onChange={(e) => save.mutate({ is_leave: e.target.checked })}
-          className="accent-slate-900"
+          className=""
         />
         이 날은 휴가
-        <span className="text-xs text-slate-400">체크하면 팀 화면에 휴가로 표시되고 미작성 집계에서 빠집니다</span>
+        <span className="text-xs text-on-surface-variant">체크하면 팀 화면에 휴가로 표시되고 미작성 집계에서 빠집니다</span>
       </label>
 
       <Section
@@ -186,7 +186,7 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
         count={todo.length}
         extra={
           fresh.length > 0 && (
-            <button onClick={() => refresh.mutate()} className="text-xs text-slate-500 hover:text-slate-900">
+            <button onClick={() => refresh.mutate()} className="text-xs text-on-surface-variant hover:text-on-surface">
               새 업무 {fresh.length}건 불러오기
             </button>
           )
@@ -249,17 +249,17 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
       <div className="flex items-center gap-3">
         <button
           onClick={() => save.mutate({ submitted_at: new Date().toISOString() })}
-          className="btn bg-slate-900 text-white"
+          className="btn-filled"
         >
           제출
         </button>
         {report.submitted_at && (
-          <span className="text-xs text-emerald-600">
+          <span className="text-xs text-signal-green">
             제출됨 · {report.submitted_at.slice(0, 16).replace('T', ' ')}
           </span>
         )}
         <span className="flex-1" />
-        <button onClick={() => setHistOpen((v) => !v)} className="text-xs text-slate-400 hover:text-slate-700">
+        <button onClick={() => setHistOpen((v) => !v)} className="text-xs text-on-surface-variant hover:text-on-surface">
           변경 이력
         </button>
       </div>
@@ -280,7 +280,7 @@ function ItemList({
   onEdit: (id: number, label: string) => void
   onDelete: (id: number) => void
 }) {
-  if (!items.length) return <p className="text-sm text-slate-300 py-1">항목 없음</p>
+  if (!items.length) return <p className="text-sm text-on-surface-variant/60 py-1">항목 없음</p>
   return (
     <ul className="space-y-1">
       {items.map((i) => (
@@ -289,17 +289,17 @@ function ItemList({
             type="checkbox"
             checked={i.is_done}
             onChange={(e) => onToggle(i, e.target.checked)}
-            className="accent-slate-900 shrink-0"
+            className="shrink-0"
           />
           <input
-            className="flex-1 text-sm bg-transparent outline-none border-b border-transparent focus:border-slate-300 py-0.5"
+            className="flex-1 text-sm bg-transparent outline-none border-b border-transparent focus:border-outline py-0.5"
             defaultValue={i.label}
             onBlur={(e) => e.target.value !== i.label && onEdit(i.id, e.target.value)}
           />
-          {i.is_manual && <span className="text-[10px] text-slate-300 shrink-0">직접</span>}
+          {i.is_manual && <span className="text-[10px] text-on-surface-variant/60 shrink-0">직접</span>}
           <button
             onClick={() => onDelete(i.id)}
-            className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 text-xs px-1 shrink-0"
+            className="opacity-0 group-hover:opacity-100 text-on-surface-variant/60 hover:text-error text-xs px-1 shrink-0"
           >
             ✕
           </button>
@@ -347,12 +347,12 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-4">
+    <div className="bg-surface-lowest border border-outline-variant rounded-md p-4">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-sm font-semibold">{title}</h2>
-        {count !== undefined && <span className="text-xs text-slate-400">{count}</span>}
+        {count !== undefined && <span className="text-xs text-on-surface-variant">{count}</span>}
         {human && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">직접 작성</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-signal-yellow-c text-signal-yellow">직접 작성</span>
         )}
         <span className="flex-1" />
         {extra}
@@ -379,7 +379,7 @@ function TeamDaily({
   return (
     <div className="space-y-3">
       {isAdmin && (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-on-surface-variant">
           관리자가 작성한 일지는 이 목록에 표시되지 않습니다. 팀원 {members.length}명의 일지만 모읍니다.
         </p>
       )}
@@ -389,26 +389,26 @@ function TeamDaily({
         const todo = items.filter((i) => i.section === 'todo')
         const done = items.filter((i) => i.section === 'done')
         return (
-          <div key={m.id} className="bg-white border border-slate-200 rounded-lg p-4">
+          <div key={m.id} className="bg-surface-lowest border border-outline-variant rounded-md p-4">
             <div className="flex items-baseline gap-2 mb-2">
               <span className="font-semibold text-sm">{m.name}</span>
-              <span className="text-xs text-slate-400">{m.part}</span>
+              <span className="text-xs text-on-surface-variant">{m.part}</span>
               <span className="flex-1" />
               {r?.is_leave ? (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">휴가</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container">휴가</span>
               ) : r?.submitted_at ? (
-                <span className="text-xs text-emerald-600">제출</span>
+                <span className="text-xs text-signal-green">제출</span>
               ) : r ? (
-                <span className="text-xs text-slate-300">작성 중</span>
+                <span className="text-xs text-on-surface-variant/60">작성 중</span>
               ) : (
-                <span className="text-xs text-red-500">미작성</span>
+                <span className="text-xs text-error">미작성</span>
               )}
             </div>
 
             {!r ? (
-              <p className="text-xs text-slate-300">{date} 일지 없음</p>
+              <p className="text-xs text-on-surface-variant/60">{date} 일지 없음</p>
             ) : r.is_leave && !items.length ? (
-              <p className="text-xs text-slate-300">휴가</p>
+              <p className="text-xs text-on-surface-variant/60">휴가</p>
             ) : (
               <div className="text-sm space-y-1.5">
                 <TeamLine label="To Do" items={todo.map((i) => i.label)} />
@@ -428,8 +428,8 @@ function TeamLine({ label, items, warn }: { label: string; items: string[]; warn
   if (!items.length) return null
   return (
     <div className="flex gap-2">
-      <span className={`text-xs w-10 shrink-0 pt-0.5 ${warn ? 'text-red-500' : 'text-slate-400'}`}>{label}</span>
-      <span className="text-slate-700">{items.join(' / ')}</span>
+      <span className={`text-xs w-10 shrink-0 pt-0.5 ${warn ? 'text-error' : 'text-on-surface-variant'}`}>{label}</span>
+      <span className="text-on-surface">{items.join(' / ')}</span>
     </div>
   )
 }

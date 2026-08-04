@@ -61,13 +61,13 @@ export default function Team() {
     <div className="max-w-5xl">
       <div className="flex items-baseline gap-3 mb-5">
         <h1 className="text-lg font-bold">팀 현황</h1>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-on-surface-variant">
           진행 {stat.active}건 · 🔴 {stat.red} · 🟡 {stat.yellow}
         </span>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <select className="chip border-slate-300 text-xs" value={who} onChange={(e) => setWho(e.target.value)}>
+        <select className="chip border-outline text-xs" value={who} onChange={(e) => setWho(e.target.value)}>
           <option value="all">담당자 전체</option>
           {profiles.map((p) => (
             <option key={p.id} value={p.id}>
@@ -76,7 +76,7 @@ export default function Team() {
           ))}
         </select>
 
-        <select className="chip border-slate-300 text-xs" value={cat} onChange={(e) => setCat(e.target.value)}>
+        <select className="chip border-outline text-xs" value={cat} onChange={(e) => setCat(e.target.value)}>
           <option value="all">카테고리 전체</option>
           {L1_LIST.map((l) => (
             <option key={l} value={l}>
@@ -90,14 +90,14 @@ export default function Team() {
             key={s}
             onClick={() => setSig(s)}
             className={`chip text-xs ${
-              sig === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'
+              sig === s ? 'chip-on' : 'border-outline'
             }`}
           >
             {{ all: '신호 전체', red: '🔴', yellow: '🟡', green: '🟢' }[s]}
           </button>
         ))}
 
-        <label className="chip border-slate-300 text-xs flex items-center gap-1.5 cursor-pointer">
+        <label className="chip border-outline text-xs flex items-center gap-1.5 cursor-pointer">
           <input type="checkbox" checked={hideDone} onChange={(e) => setHideDone(e.target.checked)} />
           완료 숨김
         </label>
@@ -108,9 +108,9 @@ export default function Team() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-400">불러오는 중…</p>
+        <p className="text-sm text-on-surface-variant">불러오는 중…</p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-slate-400">조건에 맞는 업무가 없습니다.</p>
+        <p className="text-sm text-on-surface-variant">조건에 맞는 업무가 없습니다.</p>
       ) : (
         <div className="space-y-2">
           {rows.map((t) => (

@@ -126,13 +126,13 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
   return (
     <section
       ref={rootRef}
-      className="bg-white border border-slate-300 rounded-xl p-5 mb-4 shadow-sm"
+      className="bg-surface-lowest border border-outline rounded-md p-5 mb-4 shadow-sm"
       onKeyDown={onKeyDown}
     >
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-sm">장애 등록</h2>
-          <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-700">
+          <button onClick={onClose} className="text-xs text-on-surface-variant hover:text-on-surface">
             닫기 <span className="opacity-60">Esc</span>
           </button>
         </div>
@@ -158,7 +158,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     onClick={() => setSystem(s)}
-                    className={`chip ${system === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'}`}
+                    className={`chip ${system === s ? 'chip-on' : 'border-outline hover:bg-surface-low'}`}
                   >
                     {i < 4 && <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>}
                     {s}
@@ -168,7 +168,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
                       type="button"
                       title="시스템 삭제"
                       onClick={() => delSys.mutate(custom.id)}
-                      className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 text-xs px-1"
+                      className="opacity-0 group-hover:opacity-100 text-on-surface-variant/60 hover:text-error text-xs px-1"
                     >
                       ✕
                     </button>
@@ -179,7 +179,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => setSysOpen((v) => !v)}
-              className={`chip text-xs ${sysOpen ? 'border-slate-900' : 'border-slate-300'} hover:bg-slate-50`}
+              className={`chip text-xs ${sysOpen ? 'border-primary' : 'border-outline'} hover:bg-surface-low`}
             >
               + 시스템
             </button>
@@ -205,7 +205,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
                 type="button"
                 onClick={submitSystem}
                 disabled={!newSystem.trim() || addSys.isPending}
-                className="btn border border-slate-300 text-xs shrink-0"
+                className="btn border border-outline text-xs shrink-0"
               >
                 추가
               </button>
@@ -237,7 +237,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
             })}
           </div>
           {/* 등급 기준을 화면에 띄워 판단이 사람마다 갈리지 않게 한다 */}
-          <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">{SEVERITY_CRITERIA[severity]}</p>
+          <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">{SEVERITY_CRITERIA[severity]}</p>
         </ChipRow>
 
         <ChipRow label="발생일">
@@ -247,7 +247,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
                 key={c.label}
                 type="button"
                 onClick={() => setOccurredAt(c.value)}
-                className={`chip ${occurredAt === c.value ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 hover:bg-slate-50'}`}
+                className={`chip ${occurredAt === c.value ? 'chip-on' : 'border-outline hover:bg-surface-low'}`}
               >
                 <span className="opacity-50 mr-1 text-[11px]">{i + 1}</span>
                 {c.label}
@@ -257,7 +257,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
               type="date"
               value={occurredAt}
               onChange={(e) => setOccurredAt(e.target.value)}
-              className="chip border-slate-300 text-xs"
+              className="chip border-outline text-xs"
             />
           </div>
         </ChipRow>
@@ -265,7 +265,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={() => setMoreOpen((v) => !v)}
-          className="text-xs text-slate-400 mb-3"
+          className="text-xs text-on-surface-variant mb-3"
           tabIndex={-1}
         >
           {moreOpen ? '▾' : '▸'} 원인유형·조치내용·재발방지 (나중에 입력 가능)
@@ -274,14 +274,14 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
         {moreOpen && (
           <div className="space-y-3 mb-4">
             <div>
-              <div className="text-xs text-slate-500 mb-1">원인유형</div>
+              <div className="text-xs text-on-surface-variant mb-1">원인유형</div>
               <div className="flex flex-wrap gap-1.5">
                 {CAUSE_TYPES.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setCauseType(causeType === c ? '' : c)}
-                    className={`chip text-xs ${causeType === c ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'}`}
+                    className={`chip text-xs ${causeType === c ? 'chip-on' : 'border-outline'}`}
                   >
                     {c}
                   </button>
@@ -289,11 +289,11 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500 mb-1">조치 내용</div>
+              <div className="text-xs text-on-surface-variant mb-1">조치 내용</div>
               <textarea className="field h-16 resize-none" value={action} onChange={(e) => setAction(e.target.value)} />
             </div>
             <div>
-              <div className="text-xs text-slate-500 mb-1">재발방지 대책</div>
+              <div className="text-xs text-on-surface-variant mb-1">재발방지 대책</div>
               <textarea
                 className="field h-16 resize-none"
                 value={recurrence}
@@ -304,14 +304,14 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
-        {flash && <p className="text-sm text-emerald-600 mb-3">{flash}</p>}
+        {err && <p className="text-sm text-error mb-3">{err}</p>}
+        {flash && <p className="text-sm text-signal-green mb-3">{flash}</p>}
 
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={() => save.mutate(true)} disabled={save.isPending} className="btn border border-slate-300">
-            저장 후 계속 <span className="text-slate-400 text-xs">⌃⏎</span>
+          <button type="button" onClick={() => save.mutate(true)} disabled={save.isPending} className="btn-outlined">
+            저장 후 계속 <span className="text-on-surface-variant text-xs">⌃⏎</span>
           </button>
-          <button type="button" onClick={() => save.mutate(false)} disabled={save.isPending} className="btn bg-slate-900 text-white">
+          <button type="button" onClick={() => save.mutate(false)} disabled={save.isPending} className="btn-filled">
             저장 <span className="opacity-60 text-xs">⏎</span>
           </button>
         </div>
@@ -323,7 +323,7 @@ export default function IncidentForm({ onClose }: { onClose: () => void }) {
 function ChipRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-4">
-      <div className="text-xs text-slate-500 mb-1.5">{label}</div>
+      <div className="text-xs text-on-surface-variant mb-1.5">{label}</div>
       {children}
     </div>
   )

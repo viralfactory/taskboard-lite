@@ -79,7 +79,7 @@ export default function MyTasks() {
             setFormSeed(null)
             setFormOpen((v) => !v)
           }}
-          className="btn bg-slate-900 text-white"
+          className="btn-filled"
         >
           {formOpen ? '등록 폼 닫기' : '+ 새 업무'} <span className="opacity-50 text-xs">N</span>
         </button>
@@ -91,7 +91,7 @@ export default function MyTasks() {
             key={t}
             onClick={() => setTab(t)}
             className={`chip text-xs ${
-              tab === t ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'
+              tab === t ? 'chip-on' : 'border-outline'
             }`}
           >
             {{ doing: '진행 중', done: '완료', all: '전체' }[t]} {counts[t]}
@@ -108,9 +108,9 @@ export default function MyTasks() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-400">불러오는 중…</p>
+        <p className="text-sm text-on-surface-variant">불러오는 중…</p>
       ) : shown.length === 0 ? (
-        <div className="text-sm text-slate-400 border border-dashed border-slate-200 rounded-lg p-10 text-center">
+        <div className="text-sm text-on-surface-variant border border-dashed border-outline-variant rounded-md p-10 text-center">
           업무가 없습니다. <b>N</b> 키를 눌러 등록하세요.
         </div>
       ) : (

@@ -22,16 +22,16 @@ export default function DueChangeModal({ task, onClose }: { task: Task; onClose:
   })
 
   return (
-    <div className="fixed inset-0 bg-black/30 grid place-items-center p-4 z-50" onMouseDown={onClose}>
-      <div className="bg-white rounded-xl p-6 w-full max-w-sm" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/32 grid place-items-center p-4 z-50" onMouseDown={onClose}>
+      <div className="bg-surface-lowest rounded-lg shadow-e3 p-6 w-full max-w-sm" onMouseDown={(e) => e.stopPropagation()}>
         <h2 className="font-semibold mb-1">마감일 변경</h2>
-        <p className="text-xs text-slate-400 mb-4 truncate">{task.name}</p>
+        <p className="text-xs text-on-surface-variant mb-4 truncate">{task.name}</p>
 
-        <div className="text-xs text-slate-500 mb-1">새 마감일</div>
+        <div className="text-xs text-on-surface-variant mb-1">새 마감일</div>
         <input type="date" className="field mb-3" value={due} onChange={(e) => setDue(e.target.value)} />
 
-        <div className="text-xs text-slate-500 mb-1">
-          변경 사유 <span className="text-red-500">*</span>
+        <div className="text-xs text-on-surface-variant mb-1">
+          변경 사유 <span className="text-error">*</span>
         </div>
         <textarea
           className="field h-20 resize-none mb-1"
@@ -40,20 +40,20 @@ export default function DueChangeModal({ task, onClose }: { task: Task; onClose:
           placeholder="예: 선행 과제 지연으로 착수 지연"
           autoFocus
         />
-        <p className="text-xs text-slate-400 mb-4">
+        <p className="text-xs text-on-surface-variant mb-4">
           지금까지 변경 {task.due_change_count ?? 0}회 · 저장하면 {(task.due_change_count ?? 0) + 1}회가 됩니다.
         </p>
 
-        {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
+        {err && <p className="text-sm text-error mb-3">{err}</p>}
 
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="btn text-slate-500">
+          <button onClick={onClose} className="btn text-on-surface-variant">
             취소
           </button>
           <button
             onClick={() => save.mutate()}
             disabled={!reason.trim() || !due || save.isPending}
-            className="btn bg-slate-900 text-white"
+            className="btn-filled"
           >
             변경
           </button>

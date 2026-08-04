@@ -60,55 +60,55 @@ export default function TaskRow({
 
   return (
     <>
-      <div className="bg-white border border-slate-200 rounded-lg">
+      <div className="bg-surface-lowest border border-outline-variant rounded-md">
         <div className="flex items-center gap-3 px-3 py-2.5">
-          <button onClick={() => setOpen((v) => !v)} className="text-slate-300 w-4 shrink-0">
+          <button onClick={() => setOpen((v) => !v)} className="text-on-surface-variant/60 w-4 shrink-0">
             {open ? '▾' : '▸'}
           </button>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className={`truncate text-sm ${task.status === 'done' ? 'line-through text-slate-400' : ''}`}>
+              <span className={`truncate text-sm ${task.status === 'done' ? 'line-through text-on-surface-variant' : ''}`}>
                 {task.name}
               </span>
               {openIssues.length > 0 && (
-                <span className="text-xs text-red-500 shrink-0">이슈 {openIssues.length}</span>
+                <span className="text-xs text-error shrink-0">이슈 {openIssues.length}</span>
               )}
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+            <div className="text-[11px] text-on-surface-variant mt-0.5 truncate">
               {task.cat_l1}&gt;{task.cat_l2}
               {task.stage && task.stage !== 'dev' && ` · ${task.stage}`}
               {task.is_agenda === false && ' · 보고제외'}
               {assigneeName && ` · ${assigneeName}`} · ~{task.due_date}
               {task.status !== 'done' && dLeft >= 0 && dLeft <= 3 && (
-                <span className="text-amber-600"> · D-{dLeft}</span>
+                <span className="text-signal-yellow"> · D-{dLeft}</span>
               )}
               {task.due_change_count > 0 && (
-                <span className="text-slate-400"> · 마감변경 {task.due_change_count}회</span>
+                <span className="text-on-surface-variant"> · 마감변경 {task.due_change_count}회</span>
               )}
             </div>
           </div>
 
           <div className="hidden sm:flex items-center gap-2 shrink-0">
             <ProgressBar actual={p.actualPct} plan={p.planPct} />
-            <span className="text-xs text-slate-500 w-9 text-right">{p.actualPct}%</span>
+            <span className="text-xs text-on-surface-variant w-9 text-right">{p.actualPct}%</span>
           </div>
           <SignalBadge signal={p.signal} sv={p.sv} />
 
           <button
             onClick={() => onDuplicate(task)}
             title="복제 등록"
-            className="text-slate-300 hover:text-slate-700 px-1 shrink-0"
+            className="text-on-surface-variant/60 hover:text-on-surface px-1 shrink-0"
           >
             ⧉
           </button>
         </div>
 
         {open && (
-          <div className="border-t border-slate-100 px-3 py-3 space-y-3">
+          <div className="border-t border-outline-variant px-3 py-3 space-y-3">
             {/* 체크포인트 — 토글 시 진척률·신호등 즉시 갱신 */}
             <div>
-              <div className="text-xs text-slate-400 mb-1.5">
+              <div className="text-xs text-on-surface-variant mb-1.5">
                 체크포인트 · 실적 {p.actualPct}% / 계획 {p.planPct}%
               </div>
               <div className="grid sm:grid-cols-2 gap-1">
@@ -118,12 +118,12 @@ export default function TaskRow({
                       type="checkbox"
                       checked={c.is_done}
                       onChange={(e) => toggle.mutate({ id: c.id, next: e.target.checked, name: c.name })}
-                      className="accent-slate-900"
+                      className=""
                     />
-                    <span className={c.is_done ? 'line-through text-slate-400' : ''}>{c.name}</span>
+                    <span className={c.is_done ? 'line-through text-on-surface-variant' : ''}>{c.name}</span>
                     <button
                       onClick={() => delCp.mutate({ id: c.id, name: c.name })}
-                      className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 text-xs"
+                      className="opacity-0 group-hover:opacity-100 text-on-surface-variant/60 hover:text-error text-xs"
                     >
                       ✕
                     </button>
@@ -147,15 +147,15 @@ export default function TaskRow({
             {/* 이슈 */}
             {(task.issues ?? []).length > 0 && (
               <div>
-                <div className="text-xs text-slate-400 mb-1.5">이슈</div>
+                <div className="text-xs text-on-surface-variant mb-1.5">이슈</div>
                 <ul className="space-y-1">
                   {task.issues!.map((i) => (
                     <li key={i.id} className="text-sm flex items-start gap-2">
-                      <span className={i.status === 'resolved' ? 'text-slate-300' : 'text-red-500'}>•</span>
-                      <span className={i.status === 'resolved' ? 'line-through text-slate-400' : ''}>
+                      <span className={i.status === 'resolved' ? 'text-on-surface-variant/60' : 'text-error'}>•</span>
+                      <span className={i.status === 'resolved' ? 'line-through text-on-surface-variant' : ''}>
                         [{i.type}] {i.content}
                         {i.impact_days > 0 && (
-                          <span className="text-slate-400"> · 일정영향 {i.impact_days}일</span>
+                          <span className="text-on-surface-variant"> · 일정영향 {i.impact_days}일</span>
                         )}
                       </span>
                     </li>
@@ -166,7 +166,7 @@ export default function TaskRow({
 
             <div className="grid sm:grid-cols-2 gap-3 text-sm">
               <div>
-                <div className="text-xs text-slate-400 mb-1">산출물</div>
+                <div className="text-xs text-on-surface-variant mb-1">산출물</div>
                 <input
                   className="field py-1 text-sm"
                   defaultValue={task.deliverable}
@@ -176,7 +176,7 @@ export default function TaskRow({
                 />
               </div>
               <div>
-                <div className="text-xs text-slate-400 mb-1">증빙 링크</div>
+                <div className="text-xs text-on-surface-variant mb-1">증빙 링크</div>
                 <input
                   className="field py-1 text-sm"
                   defaultValue={task.deliverable_link ?? ''}
@@ -192,12 +192,12 @@ export default function TaskRow({
             {histOpen && <HistoryList entity="task" id={task.id} />}
 
             {task.due_change_reason && (
-              <p className="text-xs text-slate-400">최근 마감변경 사유: {task.due_change_reason}</p>
+              <p className="text-xs text-on-surface-variant">최근 마감변경 사유: {task.due_change_reason}</p>
             )}
 
             <div className="flex flex-wrap gap-2 items-center pt-1">
               <select
-                className="chip border-slate-300 text-xs"
+                className="chip border-outline text-xs"
                 value={task.status}
                 onChange={(e) => patch.mutate({ status: e.target.value as Task['status'] })}
               >
@@ -208,7 +208,7 @@ export default function TaskRow({
                 ))}
               </select>
               <select
-                className="chip border-slate-300 text-xs"
+                className="chip border-outline text-xs"
                 value={task.stage || 'dev'}
                 onChange={(e) => patch.mutate({ stage: e.target.value })}
               >
@@ -218,7 +218,7 @@ export default function TaskRow({
                   </option>
                 ))}
               </select>
-              <label className="chip border-slate-300 text-xs flex items-center gap-1.5 cursor-pointer">
+              <label className="chip border-outline text-xs flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={task.is_agenda !== false}
@@ -226,20 +226,20 @@ export default function TaskRow({
                 />
                 월간보고 안건
               </label>
-              <button onClick={() => setDueOpen(true)} className="chip border-slate-300 text-xs">
+              <button onClick={() => setDueOpen(true)} className="chip border-outline text-xs">
                 마감일 변경
               </button>
-              <button onClick={() => setIssueOpen(true)} className="chip border-slate-300 text-xs">
+              <button onClick={() => setIssueOpen(true)} className="chip border-outline text-xs">
                 이슈 등록
               </button>
-              <button onClick={() => setHistOpen((v) => !v)} className="chip border-slate-300 text-xs">
+              <button onClick={() => setHistOpen((v) => !v)} className="chip border-outline text-xs">
                 변경 이력
               </button>
               <span className="flex-1" />
               {profile?.is_admin && (
                 <button
                   onClick={() => del.mutate()}
-                  className="chip border-transparent text-xs text-slate-300 hover:text-red-500"
+                  className="chip border-transparent text-xs text-on-surface-variant/60 hover:text-error"
                 >
                   삭제
                 </button>

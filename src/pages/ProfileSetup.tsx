@@ -27,14 +27,14 @@ export default function ProfileSetup() {
 
   return (
     <div className="min-h-full grid place-items-center px-4">
-      <form onSubmit={submit} className="w-full max-w-sm bg-white rounded-xl border border-slate-200 p-8">
+      <form onSubmit={submit} className="w-full max-w-sm bg-surface-lowest rounded-md border border-outline-variant p-8">
         <h1 className="text-lg font-bold mb-1">처음 오셨네요</h1>
-        <p className="text-sm text-slate-400 mb-6">{email}</p>
+        <p className="text-sm text-on-surface-variant mb-6">{email}</p>
 
-        <label className="block text-xs text-slate-500 mb-1">이름</label>
+        <label className="block text-xs text-on-surface-variant mb-1">이름</label>
         <input className="field mb-3" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
 
-        <label className="block text-xs text-slate-500 mb-1">파트</label>
+        <label className="block text-xs text-on-surface-variant mb-1">파트</label>
         <input
           className="field mb-5"
           value={part}
@@ -42,15 +42,15 @@ export default function ProfileSetup() {
           placeholder="예: 인프라파트"
         />
 
-        {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
+        {err && <p className="text-sm text-error mb-3">{err}</p>}
 
-        <button disabled={busy || !name.trim()} className="btn w-full bg-slate-900 text-white py-2.5">
+        <button disabled={busy || !name.trim()} className="btn-filled w-full h-10">
           시작하기
         </button>
         <button
           type="button"
           onClick={() => void signOut()}
-          className="btn w-full text-slate-400 mt-2"
+          className="btn w-full text-on-surface-variant mt-2"
         >
           다른 계정으로 로그인
         </button>

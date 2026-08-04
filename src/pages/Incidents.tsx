@@ -82,16 +82,16 @@ export default function Incidents() {
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-bold">장애 관리</h1>
           <div className="flex items-center gap-1 text-sm">
-            <button onClick={() => setYm(addMonths(ym, -1))} className="btn text-slate-400">
+            <button onClick={() => setYm(addMonths(ym, -1))} className="btn text-on-surface-variant">
               ‹
             </button>
             <span className="font-medium">{ym}</span>
-            <button onClick={() => setYm(addMonths(ym, 1))} className="btn text-slate-400">
+            <button onClick={() => setYm(addMonths(ym, 1))} className="btn text-on-surface-variant">
               ›
             </button>
           </div>
         </div>
-        <button onClick={() => setFormOpen((v) => !v)} className="btn bg-slate-900 text-white">
+        <button onClick={() => setFormOpen((v) => !v)} className="btn-filled">
           {formOpen ? '등록 폼 닫기' : '+ 장애 등록'} <span className="opacity-50 text-xs">I</span>
         </button>
       </div>
@@ -104,7 +104,7 @@ export default function Incidents() {
             return (
               <div
                 key={s}
-                className="rounded-lg border p-3"
+                className="rounded-md border p-3"
                 style={{ background: `#${SEVERITY[s].bg}`, borderColor: `#${SEVERITY[s].color}33` }}
               >
                 <div className="text-xs font-semibold" style={{ color: `#${SEVERITY[s].color}` }}>
@@ -117,23 +117,23 @@ export default function Incidents() {
               </div>
             )
           })}
-          <div className="col-span-3 text-xs text-slate-500">
+          <div className="col-span-3 text-xs text-on-surface-variant">
             당월 <b>{cur.length}건</b> · 전월 {prevCount}건 대비 {diffText(cur.length - prevCount)}
           </div>
         </div>
 
         {/* 최근 7개월 추이 */}
-        <div className="border border-slate-200 rounded-lg bg-white p-3">
-          <div className="text-xs text-slate-400 mb-2">최근 7개월 추이</div>
+        <div className="border border-outline-variant rounded-md bg-surface-lowest p-3">
+          <div className="text-xs text-on-surface-variant mb-2">최근 7개월 추이</div>
           <div className="flex items-end gap-1.5 h-20">
             {trend.map((t) => (
               <div key={t.m} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] text-slate-500">{t.count}</span>
+                <span className="text-[10px] text-on-surface-variant">{t.count}</span>
                 <div
-                  className={`w-full rounded-sm ${t.m === ym ? 'bg-slate-800' : 'bg-slate-200'}`}
+                  className={`w-full rounded-sm ${t.m === ym ? 'bg-primary' : 'bg-slate-200'}`}
                   style={{ height: `${Math.max(3, (t.count / maxTrend) * 52)}px` }}
                 />
-                <span className="text-[10px] text-slate-400">{t.label}</span>
+                <span className="text-[10px] text-on-surface-variant">{t.label}</span>
               </div>
             ))}
           </div>
@@ -141,7 +141,7 @@ export default function Incidents() {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <select className="chip border-slate-300 text-xs" value={system} onChange={(e) => setSystem(e.target.value)}>
+        <select className="chip border-outline text-xs" value={system} onChange={(e) => setSystem(e.target.value)}>
           <option value="all">시스템 전체</option>
           {allSystems.map((s) => (
             <option key={s}>{s}</option>
@@ -151,12 +151,12 @@ export default function Incidents() {
           <button
             key={s}
             onClick={() => setSev(s as 'all' | Severity)}
-            className={`chip text-xs ${sev === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'}`}
+            className={`chip text-xs ${sev === s ? 'chip-on' : 'border-outline'}`}
           >
             {s === 'all' ? '등급 전체' : SEVERITY[s as Severity].label}
           </button>
         ))}
-        <select className="chip border-slate-300 text-xs" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select className="chip border-outline text-xs" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="all">상태 전체</option>
           <option value="responding">조치중</option>
           <option value="resolved">해결</option>
@@ -166,9 +166,9 @@ export default function Incidents() {
       {formOpen && <IncidentForm onClose={() => setFormOpen(false)} />}
 
       {isLoading ? (
-        <p className="text-sm text-slate-400">불러오는 중…</p>
+        <p className="text-sm text-on-surface-variant">불러오는 중…</p>
       ) : rows.length === 0 ? (
-        <div className="text-sm text-slate-400 border border-dashed border-slate-200 rounded-lg p-10 text-center">
+        <div className="text-sm text-on-surface-variant border border-dashed border-outline-variant rounded-md p-10 text-center">
           이 달 등록된 장애가 없습니다. <b>I</b> 키를 눌러 등록하세요.
         </div>
       ) : (
@@ -204,10 +204,10 @@ function IncidentRow({ incident: i, onChanged }: { incident: Incident; onChanged
 
   return (
     <div
-      className={`bg-white border rounded-lg ${overdue ? 'border-red-400 ring-1 ring-red-100' : 'border-slate-200'}`}
+      className={`bg-surface-lowest border rounded-md ${overdue ? 'border-error ring-1 ring-error/30' : 'border-outline-variant'}`}
     >
       <div className="flex items-center gap-3 px-3 py-2.5">
-        <button onClick={() => setOpen((v) => !v)} className="text-slate-300 w-4 shrink-0">
+        <button onClick={() => setOpen((v) => !v)} className="text-on-surface-variant/60 w-4 shrink-0">
           {open ? '▾' : '▸'}
         </button>
 
@@ -219,17 +219,17 @@ function IncidentRow({ incident: i, onChanged }: { incident: Incident; onChanged
         </span>
 
         <div className="min-w-0 flex-1">
-          <div className={`text-sm truncate ${i.status === 'resolved' ? 'text-slate-400' : ''}`}>{i.title}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+          <div className={`text-sm truncate ${i.status === 'resolved' ? 'text-on-surface-variant' : ''}`}>{i.title}</div>
+          <div className="text-[11px] text-on-surface-variant mt-0.5 truncate">
             {i.system} · {i.occurred_at} · 경과 {elapsed}일
             {i.cause_type && ` · ${i.cause_type}`}
-            {overdue && <span className="text-red-500 font-medium"> · 24시간 내 조치 미입력</span>}
-            {!overdue && stale && <span className="text-amber-600"> · {elapsed}일 미조치</span>}
+            {overdue && <span className="text-error font-medium"> · 24시간 내 조치 미입력</span>}
+            {!overdue && stale && <span className="text-signal-yellow"> · {elapsed}일 미조치</span>}
           </div>
         </div>
 
         <select
-          className="chip border-slate-300 text-xs shrink-0"
+          className="chip border-outline text-xs shrink-0"
           value={i.status}
           onChange={(e) => patch.mutate({ status: e.target.value as Incident['status'] })}
         >
@@ -242,15 +242,15 @@ function IncidentRow({ incident: i, onChanged }: { incident: Incident; onChanged
       </div>
 
       {open && (
-        <div className="border-t border-slate-100 px-3 py-3 space-y-3">
+        <div className="border-t border-outline-variant px-3 py-3 space-y-3">
           <div>
-            <div className="text-xs text-slate-400 mb-1">원인유형</div>
+            <div className="text-xs text-on-surface-variant mb-1">원인유형</div>
             <div className="flex flex-wrap gap-1.5">
               {CAUSE_TYPES.map((c) => (
                 <button
                   key={c}
                   onClick={() => patch.mutate({ cause_type: i.cause_type === c ? null : c })}
-                  className={`chip text-xs ${i.cause_type === c ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'}`}
+                  className={`chip text-xs ${i.cause_type === c ? 'chip-on' : 'border-outline'}`}
                 >
                   {c}
                 </button>
@@ -260,7 +260,7 @@ function IncidentRow({ incident: i, onChanged }: { incident: Incident; onChanged
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <div className="text-xs text-slate-400 mb-1">조치 내용</div>
+              <div className="text-xs text-on-surface-variant mb-1">조치 내용</div>
               <textarea
                 className="field h-16 resize-none text-sm"
                 defaultValue={i.action ?? ''}
@@ -268,9 +268,9 @@ function IncidentRow({ incident: i, onChanged }: { incident: Incident; onChanged
               />
             </div>
             <div>
-              <div className="text-xs text-slate-400 mb-1">
+              <div className="text-xs text-on-surface-variant mb-1">
                 재발방지 대책
-                {i.severity === 'critical' && <span className="text-red-500 ml-1">필수</span>}
+                {i.severity === 'critical' && <span className="text-error ml-1">필수</span>}
               </div>
               <textarea
                 className="field h-16 resize-none text-sm"
@@ -284,7 +284,7 @@ function IncidentRow({ incident: i, onChanged }: { incident: Incident; onChanged
           </div>
 
           {i.severity === 'critical' && !i.recurrence_action?.trim() && (
-            <p className="text-xs text-red-500">
+            <p className="text-xs text-error">
               매우심각 장애는 재발방지 대책이 필수입니다 (SPEC-V2 2.2).
             </p>
           )}

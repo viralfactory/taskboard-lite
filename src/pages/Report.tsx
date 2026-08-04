@@ -74,15 +74,15 @@ export default function Report() {
     <div className="max-w-4xl">
       <h1 className="text-lg font-bold mb-5">리포트</h1>
 
-      <div className="bg-white border border-slate-200 rounded-lg p-4 mb-5 space-y-3">
+      <div className="bg-surface-lowest border border-outline-variant rounded-md p-4 mb-5 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-400 w-14">기간</span>
+          <span className="text-xs text-on-surface-variant w-14">기간</span>
           {(['week', 'month', 'custom'] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => pickPeriod(p)}
               className={`chip text-xs ${
-                period === p ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'
+                period === p ? 'chip-on' : 'border-outline'
               }`}
             >
               {{ week: '이번 주', month: '이번 달', custom: '직접' }[p]}
@@ -90,17 +90,17 @@ export default function Report() {
           ))}
           <input
             type="date"
-            className="chip border-slate-300 text-xs"
+            className="chip border-outline text-xs"
             value={range.start}
             onChange={(e) => {
               setPeriod('custom')
               setRange((r) => ({ ...r, start: e.target.value }))
             }}
           />
-          <span className="text-slate-300">~</span>
+          <span className="text-on-surface-variant/60">~</span>
           <input
             type="date"
-            className="chip border-slate-300 text-xs"
+            className="chip border-outline text-xs"
             value={range.end}
             onChange={(e) => {
               setPeriod('custom')
@@ -110,9 +110,9 @@ export default function Report() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-400 w-14">담당자</span>
+          <span className="text-xs text-on-surface-variant w-14">담당자</span>
           <select
-            className="chip border-slate-300 text-xs"
+            className="chip border-outline text-xs"
             value={assigneeId}
             onChange={(e) => setAssigneeId(e.target.value)}
           >
@@ -124,13 +124,13 @@ export default function Report() {
             ))}
           </select>
 
-          <span className="text-xs text-slate-400 w-14 ml-3">신호</span>
+          <span className="text-xs text-on-surface-variant w-14 ml-3">신호</span>
           {(['all', 'red'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setSignal(s)}
               className={`chip text-xs ${
-                signal === s ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300'
+                signal === s ? 'chip-on' : 'border-outline'
               }`}
             >
               {s === 'all' ? '전체' : '🔴 만'}
@@ -140,21 +140,21 @@ export default function Report() {
       </div>
 
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-on-surface-variant">
           미리보기 <b>{preview.length}</b>건 · 시트 5개 (업무현황 / 주간보고 / 이슈 / 요약 / 장애)
         </p>
         <button
           onClick={() => void download()}
           disabled={busy || preview.length === 0}
-          className="btn bg-slate-900 text-white"
+          className="btn-filled"
         >
           {busy ? '생성 중…' : `엑셀 다운로드 · ${filename}`}
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
+      <div className="bg-surface-lowest border border-outline-variant rounded-md overflow-x-auto">
         <table className="w-full text-xs">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-surface-low text-on-surface-variant">
             <tr>
               {['대분류', '중분류', '업무명', '담당자', '시작일', '마감일', '실적%', '계획%', '편차', '신호'].map(
                 (h) => (
@@ -169,7 +169,7 @@ export default function Report() {
             {preview.slice(0, 50).map((t) => {
               const p = progressOf(t)
               return (
-                <tr key={t.id} className="border-t border-slate-100">
+                <tr key={t.id} className="border-t border-outline-variant">
                   <td className="px-2 py-1.5 whitespace-nowrap">{t.cat_l1}</td>
                   <td className="px-2 py-1.5 whitespace-nowrap">{t.cat_l2}</td>
                   <td className="px-2 py-1.5 max-w-[16rem] truncate">{t.name}</td>
@@ -186,10 +186,10 @@ export default function Report() {
           </tbody>
         </table>
         {preview.length === 0 && (
-          <p className="text-sm text-slate-400 p-8 text-center">조건에 맞는 업무가 없습니다.</p>
+          <p className="text-sm text-on-surface-variant p-8 text-center">조건에 맞는 업무가 없습니다.</p>
         )}
         {preview.length > 50 && (
-          <p className="text-xs text-slate-400 px-3 py-2">
+          <p className="text-xs text-on-surface-variant px-3 py-2">
             화면에는 50건만 표시합니다. 엑셀에는 {preview.length}건이 모두 들어갑니다.
           </p>
         )}

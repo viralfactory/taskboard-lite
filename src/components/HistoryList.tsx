@@ -31,19 +31,19 @@ export default function HistoryList({ entity, id }: { entity: 'task' | 'daily'; 
     return v
   }
 
-  if (isLoading) return <p className="text-xs text-slate-400">불러오는 중…</p>
-  if (!data.length) return <p className="text-xs text-slate-400">변경 이력이 없습니다.</p>
+  if (isLoading) return <p className="text-xs text-on-surface-variant">불러오는 중…</p>
+  if (!data.length) return <p className="text-xs text-on-surface-variant">변경 이력이 없습니다.</p>
 
   return (
-    <ul className="text-xs space-y-1 bg-slate-50 border border-slate-200 rounded-lg p-3">
+    <ul className="text-xs space-y-1 bg-surface-low border border-outline-variant rounded-md p-3">
       {data.map((h) => (
         <li key={h.id} className="flex flex-wrap gap-2">
-          <span className="text-slate-400 shrink-0">{h.changed_at.slice(0, 16).replace('T', ' ')}</span>
-          <span className="text-slate-400 shrink-0">{nameOf(h.changed_by)}</span>
+          <span className="text-on-surface-variant shrink-0">{h.changed_at.slice(0, 16).replace('T', ' ')}</span>
+          <span className="text-on-surface-variant shrink-0">{nameOf(h.changed_by)}</span>
           <span className="shrink-0 font-medium">{LABEL[h.field] ?? h.field}</span>
-          <span className="text-slate-600">
+          <span className="text-on-surface">
             {valueOf(h.field, h.old_value)} → {valueOf(h.field, h.new_value)}
-            {h.reason && <span className="text-slate-400"> · {h.reason}</span>}
+            {h.reason && <span className="text-on-surface-variant"> · {h.reason}</span>}
           </span>
         </li>
       ))}

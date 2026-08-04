@@ -32,10 +32,10 @@ export default function IssueModal({ task, onClose }: { task: Task; onClose: () 
   })
 
   return (
-    <div className="fixed inset-0 bg-black/30 grid place-items-center p-4 z-50" onMouseDown={onClose}>
-      <div className="bg-white rounded-xl p-6 w-full max-w-sm" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/32 grid place-items-center p-4 z-50" onMouseDown={onClose}>
+      <div className="bg-surface-lowest rounded-lg shadow-e3 p-6 w-full max-w-sm" onMouseDown={(e) => e.stopPropagation()}>
         <h2 className="font-semibold mb-1">이슈 등록</h2>
-        <p className="text-xs text-slate-400 mb-4 truncate">{task.name}</p>
+        <p className="text-xs text-on-surface-variant mb-4 truncate">{task.name}</p>
 
         <input
           className="field mb-2"
@@ -54,7 +54,7 @@ export default function IssueModal({ task, onClose }: { task: Task; onClose: () 
 
         <div className="flex gap-2 mb-4">
           <div className="flex-1">
-            <div className="text-xs text-slate-500 mb-1">유형</div>
+            <div className="text-xs text-on-surface-variant mb-1">유형</div>
             <select className="field" value={type} onChange={(e) => setType(e.target.value)}>
               {ISSUE_TYPES.map((t) => (
                 <option key={t}>{t}</option>
@@ -62,7 +62,7 @@ export default function IssueModal({ task, onClose }: { task: Task; onClose: () 
             </select>
           </div>
           <div className="w-28">
-            <div className="text-xs text-slate-500 mb-1">일정영향(일)</div>
+            <div className="text-xs text-on-surface-variant mb-1">일정영향(일)</div>
             <input
               type="number"
               min={0}
@@ -78,22 +78,22 @@ export default function IssueModal({ task, onClose }: { task: Task; onClose: () 
             type="checkbox"
             checked={needsDecision}
             onChange={(e) => setNeedsDecision(e.target.checked)}
-            className="accent-slate-900"
+            className=""
           />
           의사결정 필요 사항
-          <span className="text-xs text-slate-400">(월간보고 3번에 올라감)</span>
+          <span className="text-xs text-on-surface-variant">(월간보고 3번에 올라감)</span>
         </label>
 
-        {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
+        {err && <p className="text-sm text-error mb-3">{err}</p>}
 
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="btn text-slate-500">
+          <button onClick={onClose} className="btn text-on-surface-variant">
             취소
           </button>
           <button
             onClick={() => save.mutate()}
             disabled={!content.trim() || save.isPending}
-            className="btn bg-slate-900 text-white"
+            className="btn-filled"
           >
             등록
           </button>

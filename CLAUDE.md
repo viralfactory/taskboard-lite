@@ -61,6 +61,22 @@
 - **`done_at` 같은 timestamptz 를 `slice(0,10)` 하지 말 것.** UTC 기준이라
   KST 오전 9시 이전 기록이 전날로 잡힌다. `dates.localDateOf()` 를 쓴다.
 
+## 디자인 (Material 3)
+
+- 색상은 `src/lib/theme.ts` 가 **소스 색상 하나에서 팔레트 전체를 생성**한다
+  (구글 공식 `@material/material-color-utilities`). 결과는 `--md-*` CSS 변수로
+  `:root` 에 꽂히고, `index.css` 의 Tailwind 토큰이 그 변수를 참조한다.
+- **화면에 hex 색상을 직접 쓰지 말 것.** `bg-primary`, `text-on-surface-variant`
+  같은 M3 색 역할만 쓴다. 사용자가 색을 바꾸면 전부 따라 바뀌어야 한다.
+  (신호등·장애 등급처럼 의미가 고정된 색만 예외)
+- 버튼은 `.btn`(text) / `.btn-filled` / `.btn-tonal` / `.btn-outlined`,
+  칩은 `.chip` / `.chip-on`, 입력은 `.field`, 카드는 `.card`.
+- 밀도는 **Compact** 다 (버튼 높이 32px). 표와 목록이 많아 M3 기본 여백을
+  그대로 쓰면 한 화면에 보이는 업무 수가 절반이 된다.
+- 색상 스타일은 개인 설정이라 `localStorage` 에만 저장한다 (DB 아님).
+- `@material/material-color-utilities` 는 내부 import 에 확장자가 없어
+  Node ESM 으로 못 읽는다. vitest 는 `server.deps.inline` 로 처리해 뒀다.
+
 ## 용어
 
 계획진척률 = 경과일 기준 / 실적진척률 = 완료 체크포인트 비율
@@ -105,6 +121,6 @@ supabase/schema-v2.sql   v2 확장 + 신규 3테이블 (schema.sql 이후 실행
 
 ```
 npm run dev     개발 서버
-npm test        단위 테스트 77개 (진척·월간집계·엑셀·PPTX)
+npm test        단위 테스트 82개 (진척·월간집계·엑셀·PPTX)
 npm run build   타입체크 + 프로덕션 빌드
 ```
