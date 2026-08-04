@@ -15,6 +15,7 @@ import { newItemsSince, snapshotItems } from '../lib/daily'
 import { useProfiles, useTasks } from '../hooks/useTasks'
 import { useAuth } from '../hooks/useAuth'
 import HistoryList from '../components/HistoryList'
+import TaskForm from '../components/TaskForm'
 import type { DailyItem, DailyReport } from '../lib/types'
 
 export default function Daily() {
@@ -81,7 +82,9 @@ export default function Daily() {
           <div className="border border-dashed border-outline-variant rounded-md p-10 text-center">
             <p className="text-sm text-on-surface-variant mb-1">{date} 일지가 아직 없습니다.</p>
             <p className="text-xs text-on-surface-variant mb-4">
-              생성하면 이 날짜에 기간이 걸친 내 업무의 체크포인트를 가져옵니다.
+              {snapshotItems(tasks, userId ?? '', date).length > 0
+                ? '생성하면 이 날짜에 기간이 걸친 내 업무의 체크포인트를 가져옵니다.'
+                : '가져올 내 업무가 없어 빈 일지로 만들어집니다. 만든 뒤에 업무를 등록할 수 있습니다.'}
             </p>
             <button onClick={() => create.mutate()} disabled={create.isPending} className="btn-filled">
               {create.isPending ? '생성 중…' : '일지 생성'}
@@ -123,6 +126,7 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
   const [newTodo, setNewTodo] = useState('')
   const [newDone, setNewDone] = useState('')
   const [histOpen, setHistOpen] = useState(false)
+  const [taskFormOpen, setTaskFormOpen] = useState(false)
 
   useEffect(() => {
     setIssueNote(report.issue_note ?? '')
@@ -181,17 +185,38 @@ function MyDaily({ report, date, onChanged }: { report: DailyReport; date: strin
         <span className="text-xs text-on-surface-variant">체크하면 팀 화면에 휴가로 표시되고 미작성 집계에서 빠집니다</span>
       </label>
 
+      {taskFormOpen && <TaskForm onClose={() => setTaskFormOpen(false)} />}
+
       <Section
         title="To Do (진행 중)"
         count={todo.length}
         extra={
-          fresh.length > 0 && (
-            <button onClick={() => refresh.mutate()} className="text-xs text-on-surface-variant hover:text-on-surface">
-              새 업무 {fresh.length}건 불러오기
-            </button>
-          )
+          <div className="flex items-center gap-3">
+            {fresh.length > 0 && (
+              <button onClick={() => refresh.mutate()} className="text-body-sm text-primary font-medium">
+                새 업무 {fresh.length}건 불러오기
+              </button>
+            )}
+            {!taskFormOpen && (
+              <button onClick={() => setTaskFormOpen(true)} className="text-body-sm text-on-surface-variant hover:text-on-surface">
+                + 내 업무 추가
+              </button>
+            )}
+          </div>
         }
       >
+        {/* 등록된 업무가 없으면 빈 포맷 그대로 두되, 여기서 바로 업무를 만들 수 있게 한다 */}
+        {items.length === 0 && !taskFormOpen && (
+          <div className="border border-dashed border-outline-variant rounded-md p-5 text-center mb-2">
+            <p className="text-body-sm text-on-surface-variant mb-3">
+              가져올 내 업무가 없습니다. 업무를 등록하면 다음 일지부터 자동으로 올라옵니다.
+            </p>
+            <button onClick={() => setTaskFormOpen(true)} className="btn-filled">
+              내 업무 등록
+            </button>
+          </div>
+        )}
+
         <ItemList
           items={todo}
           onToggle={(item, next) => toggle.mutate({ item, next })}
