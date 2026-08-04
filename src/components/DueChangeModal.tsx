@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { changeDueDate } from '../lib/api'
 import type { Task } from '../lib/types'
+import { useAuth } from '../hooks/useAuth'
 
 // 마감일 변경은 사유 없이 불가 (SPEC 6장)
 export default function DueChangeModal({ task, onClose }: { task: Task; onClose: () => void }) {
   const qc = useQueryClient()
+  const { userId } = useAuth()
   const [due, setDue] = useState(task.due_date)
   const [reason, setReason] = useState('')
   const [err, setErr] = useState('')
 
   const save = useMutation({
-    mutationFn: () => changeDueDate(task, due, reason),
+    mutationFn: () => changeDueDate(task, due, reason, userId ?? undefined),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['tasks'] })
       onClose()

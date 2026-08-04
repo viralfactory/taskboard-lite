@@ -112,6 +112,45 @@ export interface NextMonthPlan {
   sort_order: number
 }
 
+// ─────────────────────────────── v4: 데일리 스크럼
+
+export interface DailyItem {
+  id: number
+  report_id: number
+  section: 'todo' | 'done'
+  label: string
+  task_id: number | null
+  checkpoint_id: number | null
+  is_manual: boolean
+  is_done: boolean
+  sort_order: number
+}
+
+export interface DailyReport {
+  id: number
+  user_id: string
+  report_date: string
+  is_leave: boolean
+  issue_note: string | null
+  comment: string | null
+  created_at: string
+  updated_at: string
+  submitted_at: string | null
+  daily_items?: DailyItem[]
+}
+
+export interface ChangeHistory {
+  id: number
+  entity: 'task' | 'daily'
+  entity_id: number
+  field: string
+  old_value: string | null
+  new_value: string | null
+  reason: string | null
+  changed_by: string | null
+  changed_at: string
+}
+
 export interface WeeklyReport {
   id: number
   user_id: string

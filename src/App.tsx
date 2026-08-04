@@ -8,6 +8,7 @@ import Weekly from './pages/Weekly'
 import Report from './pages/Report'
 import Incidents from './pages/Incidents'
 import Monthly from './pages/Monthly'
+import Daily from './pages/Daily'
 import { useAuth } from './hooks/useAuth'
 
 function Guard({ children }: { children: React.ReactNode }) {
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/" element={<MyTasks />} />
           <Route path="/team" element={<Team />} />
           <Route path="/incidents" element={<Incidents />} />
+          <Route path="/daily" element={<Daily />} />
           <Route path="/weekly" element={<Weekly />} />
           <Route path="/monthly" element={<Monthly />} />
           <Route path="/report" element={<Report />} />

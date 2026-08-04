@@ -46,6 +46,21 @@
 - 등록 폼은 **팝업이 아니라 목록 위 인라인 섹션**이다. 화면을 가리지 않기 위한 것이므로
   모달로 되돌리지 말 것. (업무 등록·장애 등록 둘 다)
 
+## v4 추가 규칙 (데일리 스크럼)
+
+- **일지는 자동으로 생기지 않는다.** 개발자가 '일지 생성' 을 눌러야 만들어지고,
+  그 시점 스냅샷이 `daily_items` 로 복사된다. 복사 뒤로는 일지가 정본이다 —
+  원본 업무를 고쳐도 지난 일지는 바뀌지 않는다 (해당일자부터 반영).
+- 항목 단위는 **체크포인트**다. To Do = 미완료 체크포인트 / Done = 그날 체크한 것.
+- 새로 생긴 업무는 '다시 불러오기' 로 본인이 당긴다. 자동으로 밀어 넣지 않는다.
+- **토·일은 제외.** 휴가는 일지에서 그날 체크하며, 표시는 되되 작성은 선택이다.
+- 관리자(`is_admin`)가 쓴 일지는 팀 공유 목록에서 제외한다.
+- 업무 변경은 `change_history` 에 남긴다. 작업명·기간은 자주 바뀌므로 반드시 포함.
+  이력 테이블에는 **update / delete 정책을 만들지 않는다** — 고칠 수 있으면 이력이 아니다.
+- 지난 날짜 일지를 고치면 이력을 남긴다. 당일 작성분은 남기지 않는다(잡음).
+- **`done_at` 같은 timestamptz 를 `slice(0,10)` 하지 말 것.** UTC 기준이라
+  KST 오전 9시 이전 기록이 전날로 잡힌다. `dates.localDateOf()` 를 쓴다.
+
 ## 용어
 
 계획진척률 = 경과일 기준 / 실적진척률 = 완료 체크포인트 비율
@@ -70,11 +85,11 @@
 ```
 src/lib/       api.ts(모든 DB 접근) supabase.ts progress.ts dates.ts types.ts
                categories.ts constants.ts recent.ts
-               weekly.ts monthly.ts          집계 순수 함수
+               weekly.ts monthly.ts daily.ts  집계 순수 함수
                excel.ts exportPptx.ts        출력 (둘 다 동적 import)
-src/pages/     Login ProfileSetup MyTasks Team Incidents Weekly Monthly Report
+src/pages/     Login ProfileSetup MyTasks Team Incidents Daily Weekly Monthly Report
 src/components/Layout TaskForm TaskRow SignalBadge
-               IssueModal DueChangeModal IncidentForm
+               IssueModal DueChangeModal IncidentForm HistoryList
 supabase/schema.sql      v1 테이블 + RLS
 supabase/schema-v2.sql   v2 확장 + 신규 3테이블 (schema.sql 이후 실행)
 ```
@@ -90,6 +105,6 @@ supabase/schema-v2.sql   v2 확장 + 신규 3테이블 (schema.sql 이후 실행
 
 ```
 npm run dev     개발 서버
-npm test        단위 테스트 61개 (진척·월간집계·엑셀·PPTX)
+npm test        단위 테스트 77개 (진척·월간집계·엑셀·PPTX)
 npm run build   타입체크 + 프로덕션 빌드
 ```

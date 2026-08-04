@@ -16,7 +16,7 @@ GitHub Pages 정적 배포 + Supabase(Postgres + Auth). 서버 없음.
 
 1. Supabase 프로젝트 생성 (리전 **Seoul**)
 2. SQL Editor 에서 순서대로 실행 —
-   [`schema.sql`](supabase/schema.sql) → [`schema-v2.sql`](supabase/schema-v2.sql) → [`schema-v3.sql`](supabase/schema-v3.sql)
+   [`schema.sql`](supabase/schema.sql) → [`schema-v2.sql`](supabase/schema-v2.sql) → [`schema-v3.sql`](supabase/schema-v3.sql) → [`schema-v4.sql`](supabase/schema-v4.sql)
 3. Authentication > Email 에서 `Confirm email` **OFF**, `Allow new users to sign up` **OFF**
 4. Authentication > Users 에서 팀원 8명 생성 (**Auto Confirm User 체크**)
 5. 로컬 실행
@@ -36,6 +36,7 @@ Publishable key(구 anon key)만 사용합니다. **Secret key(`sb_secret_…`) 
 | 내 업무 | `#/` | 등록·수정·복제, 체크포인트 토글, 이슈 등록 |
 | 팀 현황 | `#/team` | 전체 업무, 🔴 상단 고정, 담당자·카테고리·신호 필터 |
 | 장애 관리 | `#/incidents` | 20초 등록, 등급별 카드, 7개월 추이, 24시간 미조치 강조 |
+| 데일리 | `#/daily` | 일지 생성 시 업무를 가져옴, To Do / Done, 이슈·특이사항, 팀 전체 |
 | 주간보고 | `#/weekly` | 자동 초안 + 이슈·코멘트 + 주요 진행 내용 입력 |
 | 월간보고 | `#/monthly` | 자동 집계 미리보기 → **PPTX / 엑셀** 다운로드 |
 | 리포트 | `#/report` | 조건 선택 → 미리보기 → 엑셀 5시트 다운로드 |
@@ -65,6 +66,6 @@ DB 작업은 필요 없습니다. 산출물은 각 템플릿의 **마지막 항�
 
 ```bash
 npm run dev     # 개발 서버
-npm test        # 단위 테스트 61개 (진척·월간집계·엑셀·PPTX)
+npm test        # 단위 테스트 77개 (진척·주간·월간·데일리·엑셀·PPTX)
 npm run build   # 타입체크 + 프로덕션 빌드
 ```

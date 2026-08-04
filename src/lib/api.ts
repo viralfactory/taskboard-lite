@@ -1,7 +1,10 @@
 // 모든 DB 접근은 여기를 지난다. 컴포넌트는 supabase 클라이언트를 직접 import 하지 않는다.
 import { supabase } from './supabase'
 import type {
+  ChangeHistory,
   CustomOption,
+  DailyItem,
+  DailyReport,
   Incident,
   Issue,
   MonthlyReport,
@@ -97,7 +100,25 @@ export async function createTask(input: NewTaskInput, currentUserId: string): Pr
   return task
 }
 
-export async function updateTask(id: number, patch: Partial<Task>) {
+/** 변경 이력을 남기는 필드. 작업명·기간은 상황에 따라 자주 바뀌므로 반드시 포함한다. */
+const TRACKED_FIELDS = ['name', 'start_date', 'due_date', 'status', 'stage', 'assignee_id'] as const
+
+async function recordHistory(
+  entity: 'task' | 'daily',
+  rows: { entity_id: number; field: string; old_value: string; new_value: string; reason?: string }[],
+  userId?: string,
+) {
+  if (!rows.length) return
+  await supabase
+    .from('change_history')
+    .insert(rows.map((r) => ({ ...r, entity, changed_by: userId ?? null })))
+}
+
+export async function updateTask(
+  id: number,
+  patch: Partial<Task>,
+  ctx?: { before?: Task; userId?: string; reason?: string },
+) {
   const { checkpoints, issues, initial_due_date, ...fields } = patch as Record<string, unknown> & {
     checkpoints?: unknown
     issues?: unknown
@@ -108,10 +129,27 @@ export async function updateTask(id: number, patch: Partial<Task>) {
   void initial_due_date // 최초 마감일은 수정 대상이 아니다
   const { error } = await supabase.from('tasks').update(fields).eq('id', id)
   if (error) throw new Error(error.message)
+
+  if (ctx?.before) {
+    const before = ctx.before as unknown as Record<string, unknown>
+    await recordHistory(
+      'task',
+      TRACKED_FIELDS.filter((f) => f in fields && String(fields[f] ?? '') !== String(before[f] ?? '')).map(
+        (f) => ({
+          entity_id: id,
+          field: f,
+          old_value: String(before[f] ?? ''),
+          new_value: String(fields[f] ?? ''),
+          reason: ctx.reason,
+        }),
+      ),
+      ctx.userId,
+    )
+  }
 }
 
 /** 마감일 변경은 사유 없이 불가. due_change_count 를 함께 올린다. */
-export async function changeDueDate(task: Task, newDue: string, reason: string) {
+export async function changeDueDate(task: Task, newDue: string, reason: string, userId?: string) {
   const trimmed = reason.trim()
   if (!trimmed) throw new Error('마감일 변경 사유는 필수입니다.')
   const { error } = await supabase
@@ -123,6 +161,23 @@ export async function changeDueDate(task: Task, newDue: string, reason: string) 
     })
     .eq('id', task.id)
   if (error) throw new Error(error.message)
+
+  await recordHistory(
+    'task',
+    [{ entity_id: task.id, field: 'due_date', old_value: task.due_date, new_value: newDue, reason: trimmed }],
+    userId,
+  )
+}
+
+export async function listHistory(entity: 'task' | 'daily', id: number): Promise<ChangeHistory[]> {
+  return unwrap(
+    await supabase
+      .from('change_history')
+      .select('*')
+      .eq('entity', entity)
+      .eq('entity_id', id)
+      .order('changed_at', { ascending: false }),
+  )
 }
 
 export async function deleteTask(id: number) {
@@ -132,24 +187,63 @@ export async function deleteTask(id: number) {
 
 // ─────────────────────────────────────────── checkpoints
 
-export async function toggleCheckpoint(id: number, isDone: boolean) {
+export async function toggleCheckpoint(
+  id: number,
+  isDone: boolean,
+  ctx?: { taskId: number; name: string; userId?: string },
+) {
   const { error } = await supabase
     .from('checkpoints')
     .update({ is_done: isDone, done_at: isDone ? new Date().toISOString() : null })
     .eq('id', id)
   if (error) throw new Error(error.message)
+
+  if (ctx) {
+    await recordHistory(
+      'task',
+      [
+        {
+          entity_id: ctx.taskId,
+          field: 'checkpoint',
+          old_value: `${ctx.name} ${isDone ? '미완료' : '완료'}`,
+          new_value: `${ctx.name} ${isDone ? '완료' : '미완료'}`,
+        },
+      ],
+      ctx.userId,
+    )
+  }
 }
 
-export async function addCheckpoint(taskId: number, name: string, sortOrder: number) {
+export async function addCheckpoint(
+  taskId: number,
+  name: string,
+  sortOrder: number,
+  userId?: string,
+) {
   const { error } = await supabase
     .from('checkpoints')
     .insert({ task_id: taskId, name, sort_order: sortOrder })
   if (error) throw new Error(error.message)
+  await recordHistory(
+    'task',
+    [{ entity_id: taskId, field: 'checkpoint', old_value: '', new_value: `${name} 추가` }],
+    userId,
+  )
 }
 
-export async function deleteCheckpoint(id: number) {
+export async function deleteCheckpoint(
+  id: number,
+  ctx?: { taskId: number; name: string; userId?: string },
+) {
   const { error } = await supabase.from('checkpoints').delete().eq('id', id)
   if (error) throw new Error(error.message)
+  if (ctx) {
+    await recordHistory(
+      'task',
+      [{ entity_id: ctx.taskId, field: 'checkpoint', old_value: `${ctx.name}`, new_value: '삭제됨' }],
+      ctx.userId,
+    )
+  }
 }
 
 // ─────────────────────────────────────────── issues
@@ -231,6 +325,114 @@ export async function updateIncident(id: number, patch: Partial<Incident>) {
 export async function deleteIncident(id: number) {
   const { error } = await supabase.from('incidents').delete().eq('id', id)
   if (error) throw new Error(error.message)
+}
+
+// ═══════════════════════════════════════════ v4 — 데일리 스크럼
+//
+// 일지는 자동으로 생기지 않는다. '일지 생성' 을 눌러야 만들어지고,
+// 그 시점 스냅샷이 daily_items 로 복사된다.
+
+const DAILY_SELECT = '*, daily_items(*)'
+
+export async function listDailyReports(date: string): Promise<DailyReport[]> {
+  const rows = unwrap<DailyReport[]>(
+    await supabase.from('daily_reports').select(DAILY_SELECT).eq('report_date', date),
+  )
+  for (const r of rows) r.daily_items = (r.daily_items ?? []).sort((a, b) => a.sort_order - b.sort_order)
+  return rows
+}
+
+export async function createDailyReport(
+  userId: string,
+  date: string,
+  items: Omit<DailyItem, 'id' | 'report_id' | 'is_manual'>[],
+): Promise<DailyReport> {
+  const report = unwrap<DailyReport>(
+    await supabase.from('daily_reports').insert({ user_id: userId, report_date: date }).select().single(),
+  )
+  if (items.length) {
+    const { error } = await supabase
+      .from('daily_items')
+      .insert(items.map((i) => ({ ...i, report_id: report.id })))
+    if (error) throw new Error(error.message)
+  }
+  return report
+}
+
+/** '다시 불러오기' — 이미 있는 항목은 건드리지 않고 새로 생긴 것만 덧붙인다 */
+export async function appendDailyItems(
+  reportId: number,
+  items: Omit<DailyItem, 'id' | 'report_id' | 'is_manual'>[],
+) {
+  if (!items.length) return
+  const { error } = await supabase
+    .from('daily_items')
+    .insert(items.map((i) => ({ ...i, report_id: reportId })))
+  if (error) throw new Error(error.message)
+}
+
+/** 지난 날짜의 일지를 고치면 이력을 남긴다 (오늘 작성분은 남기지 않는다 — 잡음) */
+export async function saveDailyReport(
+  report: DailyReport,
+  patch: Partial<DailyReport>,
+  ctx: { userId: string; today: string },
+) {
+  const { error } = await supabase
+    .from('daily_reports')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', report.id)
+  if (error) throw new Error(error.message)
+
+  if (report.report_date < ctx.today) {
+    const before = report as unknown as Record<string, unknown>
+    const fields = patch as unknown as Record<string, unknown>
+    await recordHistory(
+      'daily',
+      (['issue_note', 'comment', 'is_leave'] as const)
+        .filter((f) => f in fields && String(fields[f] ?? '') !== String(before[f] ?? ''))
+        .map((f) => ({
+          entity_id: report.id,
+          field: f,
+          old_value: String(before[f] ?? ''),
+          new_value: String(fields[f] ?? ''),
+        })),
+      ctx.userId,
+    )
+  }
+}
+
+export async function addDailyItem(
+  reportId: number,
+  section: 'todo' | 'done',
+  label: string,
+  sortOrder: number,
+) {
+  const { error } = await supabase
+    .from('daily_items')
+    .insert({ report_id: reportId, section, label, sort_order: sortOrder, is_manual: true })
+  if (error) throw new Error(error.message)
+}
+
+export async function updateDailyItem(id: number, patch: Partial<DailyItem>) {
+  const { error } = await supabase.from('daily_items').update(patch).eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteDailyItem(id: number) {
+  const { error } = await supabase.from('daily_items').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+/** 일지 안에서 항목을 체크하면 원본 체크포인트도 함께 완료 처리한다 */
+export async function completeDailyItem(item: DailyItem, isDone: boolean, ctx: { userId: string; taskName?: string }) {
+  await updateDailyItem(item.id, { is_done: isDone, section: isDone ? 'done' : 'todo' })
+  if (item.checkpoint_id && item.task_id) {
+    await toggleCheckpoint(item.checkpoint_id, isDone, {
+      taskId: item.task_id,
+      name: ctx.taskName ?? item.label,
+      userId: ctx.userId,
+    })
+  }
 }
 
 // ─────────────────────────────────────────── custom_options (사용자가 늘리는 목록)

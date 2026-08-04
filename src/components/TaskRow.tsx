@@ -7,6 +7,7 @@ import { diffDays, todayStr } from '../lib/dates'
 import SignalBadge, { ProgressBar } from './SignalBadge'
 import DueChangeModal from './DueChangeModal'
 import IssueModal from './IssueModal'
+import HistoryList from './HistoryList'
 import type { Task } from '../lib/types'
 import { useAuth } from '../hooks/useAuth'
 
@@ -22,25 +23,36 @@ export default function TaskRow({
   onDuplicate: (t: Task) => void
 }) {
   const qc = useQueryClient()
-  const { profile } = useAuth()
+  const { profile, userId } = useAuth()
   const [open, setOpen] = useState(false)
   const [dueOpen, setDueOpen] = useState(false)
   const [issueOpen, setIssueOpen] = useState(false)
+  const [histOpen, setHistOpen] = useState(false)
   const [newCp, setNewCp] = useState('')
   const p = progressOf(task)
 
   const onSuccess = () => void qc.invalidateQueries({ queryKey: ['tasks'] })
 
   const toggle = useMutation({
-    mutationFn: (v: { id: number; next: boolean }) => toggleCheckpoint(v.id, v.next),
+    mutationFn: (v: { id: number; next: boolean; name: string }) =>
+      toggleCheckpoint(v.id, v.next, { taskId: task.id, name: v.name, userId: userId ?? undefined }),
     onSuccess,
   })
-  const patch = useMutation({ mutationFn: (v: Partial<Task>) => updateTask(task.id, v), onSuccess })
+  const patch = useMutation({
+    mutationFn: (v: Partial<Task>) =>
+      updateTask(task.id, v, { before: task, userId: userId ?? undefined }),
+    onSuccess,
+  })
   const addCp = useMutation({
-    mutationFn: (name: string) => addCheckpoint(task.id, name, task.checkpoints.length),
+    mutationFn: (name: string) =>
+      addCheckpoint(task.id, name, task.checkpoints.length, userId ?? undefined),
     onSuccess,
   })
-  const delCp = useMutation({ mutationFn: (id: number) => deleteCheckpoint(id), onSuccess })
+  const delCp = useMutation({
+    mutationFn: (v: { id: number; name: string }) =>
+      deleteCheckpoint(v.id, { taskId: task.id, name: v.name, userId: userId ?? undefined }),
+    onSuccess,
+  })
   const del = useMutation({ mutationFn: () => deleteTask(task.id), onSuccess })
 
   const dLeft = diffDays(todayStr(), task.due_date)
@@ -105,12 +117,12 @@ export default function TaskRow({
                     <input
                       type="checkbox"
                       checked={c.is_done}
-                      onChange={(e) => toggle.mutate({ id: c.id, next: e.target.checked })}
+                      onChange={(e) => toggle.mutate({ id: c.id, next: e.target.checked, name: c.name })}
                       className="accent-slate-900"
                     />
                     <span className={c.is_done ? 'line-through text-slate-400' : ''}>{c.name}</span>
                     <button
-                      onClick={() => delCp.mutate(c.id)}
+                      onClick={() => delCp.mutate({ id: c.id, name: c.name })}
                       className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 text-xs"
                     >
                       ✕
@@ -177,6 +189,8 @@ export default function TaskRow({
               </div>
             </div>
 
+            {histOpen && <HistoryList entity="task" id={task.id} />}
+
             {task.due_change_reason && (
               <p className="text-xs text-slate-400">최근 마감변경 사유: {task.due_change_reason}</p>
             )}
@@ -217,6 +231,9 @@ export default function TaskRow({
               </button>
               <button onClick={() => setIssueOpen(true)} className="chip border-slate-300 text-xs">
                 이슈 등록
+              </button>
+              <button onClick={() => setHistOpen((v) => !v)} className="chip border-slate-300 text-xs">
+                변경 이력
               </button>
               <span className="flex-1" />
               {profile?.is_admin && (

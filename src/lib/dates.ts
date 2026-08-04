@@ -111,6 +111,33 @@ export function recentMonths(ym: string, n: number): string[] {
   return Array.from({ length: n }, (_, i) => addMonths(ym, i - (n - 1)))
 }
 
+/**
+ * ISO timestamptz → 로컬 'YYYY-MM-DD'.
+ * done_at 같은 UTC 문자열을 slice(0,10) 하면 KST 오전 9시 이전 기록이
+ * 전날로 잡힌다. 하루 단위로 집계하는 곳에서는 반드시 이 함수를 쓸 것.
+ */
+export function localDateOf(iso: string): string {
+  return fmt(new Date(iso))
+}
+
+/** 토·일 제외 */
+export function isWorkday(date: string): boolean {
+  const d = parseDate(date).getDay()
+  return d !== 0 && d !== 6
+}
+
+/** 기준일 이전(포함)의 가장 가까운 평일 */
+export function lastWorkday(base = todayStr()): string {
+  let d = base
+  for (let i = 0; i < 7 && !isWorkday(d); i++) d = addDays(d, -1)
+  return d
+}
+
+const DOW = ['일', '월', '화', '수', '목', '금', '토']
+export function dowOf(date: string): string {
+  return DOW[parseDate(date).getDay()]
+}
+
 /** 'M/D' — 보고서 일정 표기용 */
 export function mdOf(date: string): string {
   const [, m, d] = date.split('-')

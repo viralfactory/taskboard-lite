@@ -78,8 +78,10 @@ git --version
    (운영·장애 관리 + 월간보고용)
 6. 한 번 더 **New query** 로 [`supabase/schema-v3.sql`](../supabase/schema-v3.sql) 실행
    (카테고리 통합 + 사용자 추가 목록용)
+7. 마지막으로 [`supabase/schema-v4.sql`](../supabase/schema-v4.sql) 실행
+   (데일리 스크럼 + 변경 이력)
 
-> **순서를 지켜야 합니다** — `schema.sql` → `schema-v2.sql` → `schema-v3.sql`
+> **순서를 지켜야 합니다** — `schema.sql` → `schema-v2.sql` → `schema-v3.sql` → `schema-v4.sql`
 
 **확인** — 같은 편집기에서 아래를 실행하세요.
 
@@ -88,9 +90,10 @@ select tablename, policyname, cmd from pg_policies
 where schemaname = 'public' order by tablename, cmd;
 ```
 
-9개 테이블 × 4개 정책 = **총 36행**이 나와야 합니다.
+**총 46행**이 나와야 합니다.
 (v1: `profiles` `tasks` `checkpoints` `issues` `weekly_reports` /
- v2: `incidents` `monthly_reports` `next_month_plans` / v3: `custom_options`)
+ v2: `incidents` `monthly_reports` `next_month_plans` / v3: `custom_options` /
+ v4: `daily_reports` `daily_items` + `change_history` 2개)
 
 v2 컬럼이 붙었는지도 확인하세요. **4행**이 나와야 합니다.
 

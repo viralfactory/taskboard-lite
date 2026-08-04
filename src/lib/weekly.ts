@@ -1,5 +1,5 @@
 // 주간보고 자동 초안 집계 (SPEC 10장) — 1·2·3번 항목은 여기서 자동으로 만든다.
-import { addWeeks, weekRange } from './dates'
+import { addWeeks, localDateOf, weekRange } from './dates'
 import { progressOf } from './progress'
 import type { Task } from './types'
 
@@ -7,7 +7,7 @@ import type { Task } from './types'
 export function doneDateOf(t: Task): string {
   const stamps = (t.checkpoints ?? []).map((c) => c.done_at).filter((v): v is string => !!v)
   if (!stamps.length) return t.due_date
-  return stamps.sort().at(-1)!.slice(0, 10)
+  return localDateOf(stamps.sort().at(-1)!)
 }
 
 export interface WeeklyDigest {
